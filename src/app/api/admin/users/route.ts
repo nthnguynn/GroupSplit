@@ -7,7 +7,7 @@ async function verifyAdmin() {
   const session = await auth();
   if (!session?.user) return null;
   const user = session.user as any;
-  if (user.username !== "qy286" && user.role !== "ADMIN") return null;
+  if (user.role !== "ADMIN") return null;
   return user;
 }
 
@@ -65,6 +65,14 @@ export async function PATCH(req: NextRequest) {
     const targetUser = await prisma.user.findUnique({ where: { id: userId } });
     if (!targetUser) {
       return NextResponse.json({ error: "Không tìm thấy người dùng" }, { status: 404 });
+    }
+
+    // Không cho Admin tự hạ quyền / huỷ xác thực chính mình (tránh mất hết tài khoản Admin)
+    if (userId === admin.id && (role === "USER" || isEmailVerified === false)) {
+      return NextResponse.json(
+        { error: "Không thể tự hạ quyền hoặc huỷ xác thực tài khoản của chính bạn" },
+        { status: 400 }
+      );
     }
 
     const updateData: any = {};

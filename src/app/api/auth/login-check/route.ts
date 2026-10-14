@@ -53,23 +53,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Tự động gán quyền ADMIN và kích hoạt xác thực email cho tài khoản qy286
-    let userRole = user.role;
-    let isVerified = user.isEmailVerified;
+    // Quyền Admin chỉ dựa vào cột role trong DB (không hardcode username)
+    const userRole = user.role;
+    const isVerified = user.isEmailVerified;
 
-    if (user.username === "qy286") {
-      if (user.role !== "ADMIN" || !user.isEmailVerified) {
-        await prisma.user.update({
-          where: { id: user.id },
-          data: { role: "ADMIN", isEmailVerified: true },
-        });
-        userRole = "ADMIN";
-        isVerified = true;
-      }
-    }
-
-    // Kiểm tra tài khoản chưa xác thực Email
-    if (user.username !== "qy286" && userRole !== "ADMIN" && !isVerified) {
+    // Kiểm tra tài khoản chưa xác thực Email (Admin được miễn)
+    if (userRole !== "ADMIN" && !isVerified) {
       return NextResponse.json(
         {
           code: "UNVERIFIED_EMAIL",

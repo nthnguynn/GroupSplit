@@ -30,6 +30,8 @@ services:
       - AUTH_TRUST_HOST=true
       - ZALO_BOT_TOKEN=${ZALO_BOT_TOKEN:-}
       - ZALO_BOT_SECRET_TOKEN=${ZALO_BOT_SECRET_TOKEN:-}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}           # Tài khoản Admin tự tạo khi DB chưa có Admin nào
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}                # Mật khẩu Admin đó (trống = không tạo)
       - WEB_CONCURRENCY=${WEB_CONCURRENCY:-}              # Số worker (trống = số nhân CPU, tối đa 16) — xem server.mjs
       - DB_CONNECTION_BUDGET=${DB_CONNECTION_BUDGET:-}    # Tổng kết nối DB cho mọi worker (trống = 80, dưới max_connections 100)
       - TRUSTED_PROXY_COUNT=${TRUSTED_PROXY_COUNT:-}      # Số reverse proxy trước app (trống = 1); 2 nếu có Cloudflare → NPM

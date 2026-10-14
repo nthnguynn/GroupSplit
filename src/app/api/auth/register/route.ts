@@ -68,29 +68,26 @@ export async function POST(req: NextRequest) {
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
 
-    // Nếu tên đăng nhập là qy286, tự động cấp quyền ADMIN và đã xác thực
-    const isAdmin = cleanUsername === "qy286";
-
+    // Mọi tài khoản mới đều là USER và phải xác thực email. Quyền Admin chỉ cấp
+    // trong DB hoặc trang Admin — không tự cấp theo username (ai đăng ký trước tên đó sẽ chiếm quyền).
     const user = await prisma.user.create({
       data: {
         username: cleanUsername,
         displayName: displayName.trim(),
         email: cleanEmail,
         passwordHash,
-        role: isAdmin ? "ADMIN" : "USER",
-        isEmailVerified: isAdmin,
-        emailVerificationToken: isAdmin ? null : otpCode,
-        emailVerificationExpires: isAdmin ? null : otpExpires,
+        role: "USER",
+        isEmailVerified: false,
+        emailVerificationToken: otpCode,
+        emailVerificationExpires: otpExpires,
       },
     });
 
-    // Gửi Email xác thực nếu không phải tài khoản admin tự động
-    if (!isAdmin) {
-      try {
-        await sendVerificationEmail(cleanEmail, otpCode, cleanUsername);
-      } catch (mailErr) {
-        console.error("Gửi email thất bại nhưng đã tạo user:", mailErr);
-      }
+    // Gửi Email xác thực
+    try {
+      await sendVerificationEmail(cleanEmail, otpCode, cleanUsername);
+    } catch (mailErr) {
+      console.error("Gửi email thất bại nhưng đã tạo user:", mailErr);
     }
 
     return NextResponse.json(
@@ -98,10 +95,8 @@ export async function POST(req: NextRequest) {
         id: user.id,
         username: user.username,
         email: user.email,
-        requiresVerification: !isAdmin,
-        message: isAdmin
-          ? "Đăng ký thành công tài khoản Quản trị viên!"
-          : "Đăng ký thành công! Vui lòng kiểm tra Email để nhập mã xác thực OTP.",
+        requiresVerification: true,
+        message: "Đăng ký thành công! Vui lòng kiểm tra Email để nhập mã xác thực OTP.",
       },
       { status: 201 }
     );

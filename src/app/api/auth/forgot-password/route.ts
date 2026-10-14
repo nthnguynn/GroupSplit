@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     if (!user.email) {
       return NextResponse.json(
-        { error: "Tài khoản này chưa đăng ký địa chỉ Email để khôi phục mật khẩu. Vui lòng liên hệ Admin (qy286)." },
+        { error: "Tài khoản này chưa đăng ký địa chỉ Email để khôi phục mật khẩu. Vui lòng liên hệ Quản trị viên." },
         { status: 400 }
       );
     }

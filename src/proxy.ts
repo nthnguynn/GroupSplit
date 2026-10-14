@@ -50,8 +50,8 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", req.nextUrl));
   }
 
-  // Bảo vệ đường dẫn Admin và zalo-helper (Chỉ cho phép Admin hoặc user qy286)
-  const isAdmin = user?.username === "qy286" || user?.role === "ADMIN";
+  // Bảo vệ đường dẫn Admin và zalo-helper (chỉ tài khoản có role ADMIN)
+  const isAdmin = user?.role === "ADMIN";
   // /api/zalo/* điều khiển Zalo Bot (đổi webhook, đọc tin nhắn) → chỉ Admin
   const isAdminOnlyRoute =
     pathname.startsWith("/admin") ||
@@ -62,7 +62,7 @@ export default auth((req) => {
   if (isAdminOnlyRoute && !isAdmin) {
     if (pathname.startsWith("/api/")) {
       return NextResponse.json(
-        { error: "Quyền truy cập bị từ chối. Chỉ dành cho Quản trị viên (qy286)!" },
+        { error: "Quyền truy cập bị từ chối. Chỉ dành cho Quản trị viên!" },
         { status: 403 }
       );
     }

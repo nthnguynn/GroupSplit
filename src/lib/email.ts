@@ -2,6 +2,9 @@ import { Resend } from "resend";
 import nodemailer from "nodemailer";
 import { prisma } from "@/lib/prisma";
 
+/** Người gửi thử nghiệm của Resend — dùng khi Admin chưa cấu hình địa chỉ người gửi riêng */
+const DEFAULT_RESEND_FROM = "GroupSplit <onboarding@resend.dev>";
+
 export interface SmtpConfig {
   host: string;
   port: number;
@@ -53,12 +56,14 @@ export async function getEmailConfig(): Promise<EmailSystemConfig> {
       process.env.RESEND_API_KEY ||
       "";
 
-    let fromEmail =
+    const configuredFrom =
       map.get("EMAIL_FROM") ||
       map.get("RESEND_FROM") ||
       process.env.EMAIL_FROM ||
       process.env.RESEND_FROM ||
-      "GroupSplit <support@qy286.me>";
+      "";
+    // Chưa cấu hình người gửi → Resend dùng địa chỉ thử nghiệm mặc định của Resend
+    let fromEmail = configuredFrom || DEFAULT_RESEND_FROM;
 
     // Format sender name if user only provided raw email
     if (fromEmail && !fromEmail.includes("<") && fromEmail.includes("@")) {
@@ -70,11 +75,12 @@ export async function getEmailConfig(): Promise<EmailSystemConfig> {
     const port = Number(map.get("SMTP_PORT") || process.env.SMTP_PORT || 587);
     const user = map.get("SMTP_USER") || process.env.SMTP_USER || "";
     const pass = map.get("SMTP_PASS") || process.env.SMTP_PASS || "";
+    // Gmail và đa số SMTP chỉ cho gửi từ chính tài khoản đăng nhập → mặc định dùng SMTP user
     const smtpFrom =
       map.get("SMTP_FROM") ||
       process.env.SMTP_FROM ||
-      fromEmail ||
-      "no-reply@groupsplit.local";
+      (configuredFrom ? fromEmail : "") ||
+      (user ? `GroupSplit <${user}>` : "no-reply@groupsplit.local");
     const secure =
       map.get("SMTP_SECURE") === "true" || process.env.SMTP_SECURE === "true";
 
@@ -85,7 +91,7 @@ export async function getEmailConfig(): Promise<EmailSystemConfig> {
   } catch (err) {
     console.error("Error reading Email config:", err);
     const resendApiKey = process.env.RESEND_API || process.env.RESEND_API_KEY || "";
-    const fromEmail = process.env.EMAIL_FROM || process.env.RESEND_FROM || "GroupSplit <support@qy286.me>";
+    const fromEmail = process.env.EMAIL_FROM || process.env.RESEND_FROM || DEFAULT_RESEND_FROM;
     return { resendApiKey, fromEmail, smtp: null };
   }
 }

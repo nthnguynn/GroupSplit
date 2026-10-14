@@ -93,7 +93,7 @@ export default function ForgotPasswordPage() {
                 <Label htmlFor="emailOrUsername">Username hoặc Email</Label>
                 <Input
                   id="emailOrUsername"
-                  placeholder="qy286 hoặc example@domain.com"
+                  placeholder="Tên đăng nhập hoặc email"
                   value={emailOrUsername}
                   onChange={(e) => setEmailOrUsername(e.target.value)}
                   required

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,8 @@ interface UserItem {
 }
 
 export default function AdminSettingsPage() {
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
   const [loading, setLoading] = useState(true);
   const [savingEmail, setSavingEmail] = useState(false);
   const [testingEmail, setTestingEmail] = useState(false);
@@ -63,7 +66,7 @@ export default function AdminSettingsPage() {
 
   const [resend, setResend] = useState({
     apiKey: "",
-    from: "GroupSplit <support@qy286.me>",
+    from: "",
   });
 
   const [smtp, setSmtp] = useState({
@@ -92,7 +95,7 @@ export default function AdminSettingsPage() {
         if (data.resend) {
           setResend({
             apiKey: data.resend.apiKey || "",
-            from: data.resend.from || "GroupSplit <support@qy286.me>",
+            from: data.resend.from || "",
           });
         }
         if (data.smtp) {
@@ -233,7 +236,7 @@ export default function AdminSettingsPage() {
         <div>
           <div className="flex items-center gap-2">
             <ShieldCheck className="h-6 w-6 text-rose-600" />
-            <h1 className="text-2xl font-bold tracking-tight">Hệ thống Quản trị Admin (`qy286`)</h1>
+            <h1 className="text-2xl font-bold tracking-tight">Hệ thống Quản trị Admin</h1>
           </div>
           <p className="text-muted-foreground text-sm">
             Quản lý cấu hình Email (Resend / SMTP), tài khoản người dùng và bảo mật hệ thống.
@@ -362,13 +365,13 @@ export default function AdminSettingsPage() {
                       <Label htmlFor="resendFrom">Email Người gửi (From Header)</Label>
                       <Input
                         id="resendFrom"
-                        placeholder="GroupSplit <support@qy286.me>"
+                        placeholder="GroupSplit <no-reply@ten-mien-cua-ban.com>"
                         value={resend.from}
                         onChange={(e) => setResend({ ...resend, from: e.target.value })}
                         className="h-11"
                       />
                       <p className="text-[11px] text-muted-foreground">
-                        Sử dụng domain đã xác thực trên Resend (VD: support@qy286.me).
+                        Sử dụng domain đã xác thực trên Resend (VD: no-reply@ten-mien-cua-ban.com).
                       </p>
                     </div>
                   </div>
@@ -520,7 +523,8 @@ export default function AdminSettingsPage() {
                 </div>
               ) : (
                 filteredUsers.map((u) => {
-                  const isCurAdmin = u.username === "qy286";
+                  // Không cho tự hạ quyền / huỷ xác thực chính mình (tránh tự khoá quyền Admin)
+                  const isSelf = u.id === currentUserId;
                   const isUpdating = updatingUserId === u.id;
 
                   return (
@@ -571,7 +575,7 @@ export default function AdminSettingsPage() {
 
                       {/* Admin Action Buttons */}
                       <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-center">
-                        {!isCurAdmin && (
+                        {!isSelf && (
                           <>
                             {/* Toggle Email Verified */}
                             <Button
@@ -589,7 +593,10 @@ export default function AdminSettingsPage() {
                               {u.isEmailVerified ? <UserX className="h-3.5 w-3.5 text-amber-500" /> : <UserCheck className="h-3.5 w-3.5 text-emerald-500" />}
                             </Button>
 
-                            {/* Reset Password Prompt */}
+                          </>
+                        )}
+
+                            {/* Reset Password — cũng dùng được cho chính mình (đổi mật khẩu Admin mà không cần email) */}
                             <Button
                               size="sm"
                               variant="outline"
@@ -597,7 +604,7 @@ export default function AdminSettingsPage() {
                               onClick={() => {
                                 const newPass = window.prompt(
                                   `Nhập mật khẩu mới cho tài khoản @${u.username}:`,
-                                  "123456"
+                                  ""
                                 );
                                 if (newPass && newPass.trim().length >= 6) {
                                   handleUpdateUser(u.id, { newPassword: newPass.trim() });
@@ -611,6 +618,8 @@ export default function AdminSettingsPage() {
                               Reset Pass
                             </Button>
 
+                        {!isSelf && (
+                          <>
                             {/* Toggle Role */}
                             <Button
                               size="sm"

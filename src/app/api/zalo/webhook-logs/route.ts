@@ -6,7 +6,7 @@ async function verifyAdmin() {
   const session = await auth();
   if (!session?.user) return null;
   const user = session.user as any;
-  if (user.username !== "qy286" && user.role !== "ADMIN") return null;
+  if (user.role !== "ADMIN") return null;
   return user;
 }
 

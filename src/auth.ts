@@ -31,23 +31,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (!isValid) return null;
 
-        // Tự động gán quyền ADMIN và xác thực email cho tài khoản qy286 nếu chưa có
-        let userRole = user.role;
-        let isVerified = user.isEmailVerified;
+        // Quyền Admin chỉ dựa vào cột role trong DB (không hardcode username)
+        const userRole = user.role;
+        const isVerified = user.isEmailVerified;
 
-        if (user.username === "qy286") {
-          if (user.role !== "ADMIN" || !user.isEmailVerified) {
-            await prisma.user.update({
-              where: { id: user.id },
-              data: { role: "ADMIN", isEmailVerified: true },
-            });
-            userRole = "ADMIN";
-            isVerified = true;
-          }
-        }
-
-        // Kiểm tra xác thực email (Trừ tài khoản qy286 hoặc Admin)
-        if (user.username !== "qy286" && userRole !== "ADMIN" && !isVerified) {
+        // Kiểm tra xác thực email (Admin được miễn)
+        if (userRole !== "ADMIN" && !isVerified) {
           throw new Error("UNVERIFIED_EMAIL");
         }
 

@@ -17,7 +17,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const user = session?.user as any;
-  const isAdmin = user?.username === "qy286" || user?.role === "ADMIN";
+  const isAdmin = user?.role === "ADMIN";
 
   const items = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -66,7 +66,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const user = session?.user as any;
-  const isAdmin = user?.username === "qy286" || user?.role === "ADMIN";
+  const isAdmin = user?.role === "ADMIN";
 
   const items = [
     { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },

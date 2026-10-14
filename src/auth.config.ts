@@ -21,7 +21,7 @@ export const authConfig = {
         (session.user as any).email = token.email;
         (session.user as any).isEmailVerified = token.isEmailVerified;
         (session.user as any).isAdmin =
-          token.username === "qy286" || token.role === "ADMIN";
+          token.role === "ADMIN";
       }
       return session;
     },

@@ -27,10 +27,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./
 COPY --from=builder /app/server.mjs ./
+COPY --from=builder /app/scripts/ensure-admin.mjs ./scripts/
 
 # Đảm bảo thư mục upload tồn tại
 RUN mkdir -p public/uploads
 
-# Chạy migrations rồi start app ở chế độ cluster (mỗi nhân CPU một worker, tối đa 16 — xem server.mjs)
+# Chạy migrations, tạo Admin đầu tiên nếu chưa có (scripts/ensure-admin.mjs), rồi start app ở chế độ cluster
 # LƯU Ý: Mọi thay đổi schema phải có migration file (bun prisma migrate dev --name <tên>)
-CMD ["sh", "-c", "bun prisma migrate deploy && exec bun run start:cluster"]
+CMD ["sh", "-c", "bun prisma migrate deploy && bun scripts/ensure-admin.mjs && exec bun run start:cluster"]

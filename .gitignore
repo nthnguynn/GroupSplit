@@ -44,3 +44,6 @@ next-env.d.ts
 
 # load test results
 /scripts/bench/results/
+
+# database SQLite cũ / dữ liệu local — không đưa lên git
+*.db

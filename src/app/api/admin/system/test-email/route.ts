@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
   }
 
   const user = session.user as any;
-  if (user.username !== "qy286" && user.role !== "ADMIN") {
+  if (user.role !== "ADMIN") {
     return NextResponse.json({ error: "Quyền truy cập bị từ chối" }, { status: 403 });
   }
 

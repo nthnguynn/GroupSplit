@@ -7,7 +7,7 @@ async function verifyAdmin() {
   if (!session?.user) return null;
 
   const user = session.user as any;
-  const isAdmin = user.username === "qy286" || user.role === "ADMIN";
+  const isAdmin = user.role === "ADMIN";
 
   if (!isAdmin) return null;
   return user;
@@ -43,7 +43,7 @@ export async function GET() {
       },
       resend: {
         apiKey: settingsMap.RESEND_API || process.env.RESEND_API || process.env.RESEND_API_KEY || "",
-        from: settingsMap.EMAIL_FROM || process.env.EMAIL_FROM || process.env.RESEND_FROM || "GroupSplit <support@qy286.me>",
+        from: settingsMap.EMAIL_FROM || process.env.EMAIL_FROM || process.env.RESEND_FROM || "",
       },
       smtp: {
         host: settingsMap.SMTP_HOST || process.env.SMTP_HOST || "",
