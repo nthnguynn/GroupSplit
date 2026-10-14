@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "ExpenseSplit" ADD COLUMN "shares" DOUBLE PRECISION NOT NULL DEFAULT 1;

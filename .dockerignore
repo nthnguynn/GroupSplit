@@ -1,0 +1,12 @@
+# Cài lại và build trong image — không chép bản của máy dev (khác hệ điều hành)
+node_modules
+.next
+
+# Secret và dữ liệu local không được nằm trong image
+.env*
+dev.db
+
+# Kết quả benchmark, log
+scripts/bench/results
+*.log
+.git

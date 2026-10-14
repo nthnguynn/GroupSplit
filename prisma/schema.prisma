@@ -1,0 +1,335 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider   = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  username           String   @unique
+  passwordHash       String
+  displayName        String
+  avatar             String?
+  role               UserRole @default(USER)
+  createdAt          DateTime @default(now())
+
+  // Email Verification & Password Reset
+  email                    String?   @unique
+  isEmailVerified          Boolean   @default(false)
+  emailVerificationToken   String?
+  emailVerificationExpires DateTime?
+  passwordResetToken       String?
+  passwordResetExpires     DateTime?
+
+  // Zalo Bot Personal Notification Chat ID
+  zaloChatId         String?
+  // Mã liên kết Zalo ngẫu nhiên, dùng 1 lần, hết hạn sau 10 phút (thay cho OTP suy ra từ user ID)
+  zaloLinkCode        String?   @unique
+  zaloLinkCodeExpires DateTime?
+
+  // Bank Info for sharing and scanning QR
+  bankName           String?
+  accountNumber      String?
+  accountName        String?
+  sepayWebhookSecret String?
+
+  ownedGroups        Group[]        @relation("GroupOwner")
+  groupMemberships   GroupMember[]
+  paidExpenses       Expense[]      @relation("ExpensePaidBy")
+  createdExpenses    Expense[]      @relation("ExpenseCreatedBy")
+  expenseSplits      ExpenseSplit[]
+  settlementsFrom    Settlement[]   @relation("SettlementFrom")
+  settlementsTo      Settlement[]   @relation("SettlementTo")
+  sepayTransactions  SepayTransaction[]
+  managedGroups      Group[]        @relation("GroupFundManager")
+  fundAllocationsSent FundAllocation[] @relation("FundAllocationFrom")
+  fundAllocationsReceived FundAllocation[] @relation("FundAllocationTo")
+  sentInvitations         GroupInvitation[] @relation("GroupInvitationInviter")
+  receivedInvitations     GroupInvitation[] @relation("GroupInvitationInvited")
+  joinRequests            GroupJoinRequest[]
+  notifications           Notification[]    @relation("NotificationRecipient")
+  fundContributions       FundContribution[] @relation("FundContributions")
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+model Group {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  avatar      String?
+  inviteCode  String   @unique @default(cuid())
+  zaloChatId     String?
+  currency       String   @default("VND")
+  createdAt      DateTime @default(now())
+
+  owner   User   @relation("GroupOwner", fields: [ownerId], references: [id])
+  ownerId String
+
+  fundManager   User?  @relation("GroupFundManager", fields: [fundManagerId], references: [id])
+  fundManagerId String?
+
+  members         GroupMember[]
+  expenses        Expense[]
+  settlements     Settlement[]
+  fundAllocations FundAllocation[]
+  fundContributions FundContribution[]
+  categories      Category[]
+  invitations     GroupInvitation[]
+  joinRequests    GroupJoinRequest[]
+}
+
+model GroupMember {
+  id       String     @id @default(cuid())
+  role     MemberRole @default(MEMBER)
+  joinedAt DateTime   @default(now())
+  isLeft   Boolean    @default(false)
+  leftAt   DateTime?
+
+  user    User   @relation(fields: [userId], references: [id])
+  userId  String
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId String
+
+  @@unique([userId, groupId])
+  @@index([groupId])
+}
+
+enum MemberRole {
+  OWNER
+  MEMBER
+}
+
+model Expense {
+  id          String        @id @default(cuid())
+  title       String
+  description String?
+  amount      Float
+  splitType   SplitType     @default(EQUAL)
+  status      ExpenseStatus @default(PENDING)
+  date        DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  category    String        @default("Khác")
+  fundingSource String      @default("MEMBER") // "MEMBER" | "FUND"
+
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId String
+
+  paidBy   User   @relation("ExpensePaidBy", fields: [paidById], references: [id])
+  paidById String
+
+  createdBy   User   @relation("ExpenseCreatedBy", fields: [createdById], references: [id])
+  createdById String
+
+  splits ExpenseSplit[]
+
+  categoryRel Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId  String?
+
+  @@index([groupId, createdAt])
+}
+
+enum SplitType {
+  EQUAL
+  CUSTOM
+}
+
+enum ExpenseStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model ExpenseSplit {
+  id     String @id @default(cuid())
+  amount Float
+  shares Float  @default(1)
+  isPaid Boolean @default(false)
+
+  expense   Expense @relation(fields: [expenseId], references: [id])
+  expenseId String
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String
+
+  @@unique([expenseId, userId])
+  @@index([userId])
+}
+
+model Settlement {
+  id          String   @id @default(cuid())
+  amount      Float
+  note        String?
+  isConfirmed Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId String
+
+  fromUser   User   @relation("SettlementFrom", fields: [fromUserId], references: [id])
+  fromUserId String
+
+  toUser   User   @relation("SettlementTo", fields: [toUserId], references: [id])
+  toUserId String
+
+  @@index([groupId])
+}
+
+model SepayTransaction {
+  id              String   @id // ID từ SePay (dùng làm khóa chống trùng)
+  gateway         String
+  transactionDate DateTime
+  accountNumber   String
+  transferType    String
+  transferAmount  Float
+  content         String
+  createdAt       DateTime @default(now())
+
+  user            User     @relation(fields: [userId], references: [id])
+  userId          String
+}
+
+model FundAllocation {
+  id          String   @id @default(cuid())
+  amount      Float
+  note        String?
+  date        DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId String
+
+  fromUser   User   @relation("FundAllocationFrom", fields: [fromUserId], references: [id])
+  fromUserId String
+
+  toUser     User   @relation("FundAllocationTo", fields: [toUserId], references: [id])
+  toUserId   String
+
+  @@index([groupId])
+}
+
+model FundContribution {
+  id          String    @id @default(cuid())
+  amount      Float
+  note        String?
+  status      String    @default("PENDING") // PENDING, CONFIRMED, REJECTED
+  createdAt   DateTime  @default(now())
+  confirmedAt DateTime?
+
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId String
+
+  user   User   @relation("FundContributions", fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([groupId])
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String
+  icon      String     @default("📦")
+  parentId  String?
+  parent    Category?  @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Category[] @relation("CategoryToCategory")
+  
+  group     Group      @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   String
+  
+  expenses  Expense[]
+  createdAt DateTime   @default(now())
+
+  @@index([groupId])
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+enum JoinRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum NotificationType {
+  GROUP_INVITE
+  JOIN_REQUEST
+  INVITE_ACCEPTED
+  INVITE_DECLINED
+  JOIN_APPROVED
+  JOIN_REJECTED
+  MEMBER_LEFT
+  EXPENSE_PENDING
+  EXPENSE_APPROVED
+  EXPENSE_REJECTED
+  SETTLEMENT_PENDING
+  SETTLEMENT_CONFIRMED
+  SETTLEMENT_REJECTED
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+}
+
+model GroupInvitation {
+  id            String           @id @default(cuid())
+  groupId       String
+  group         Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  inviterId     String
+  inviter       User             @relation("GroupInvitationInviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitedUserId String
+  invitedUser   User             @relation("GroupInvitationInvited", fields: [invitedUserId], references: [id], onDelete: Cascade)
+  status        InvitationStatus @default(PENDING)
+  createdAt     DateTime         @default(now())
+}
+
+model GroupJoinRequest {
+  id        String            @id @default(cuid())
+  groupId   String
+  group     Group             @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    JoinRequestStatus @default(PENDING)
+  createdAt DateTime          @default(now())
+}
+
+model Notification {
+  id        String             @id @default(cuid())
+  userId    String
+  user      User               @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  content   String
+  type      NotificationType
+  status    NotificationStatus @default(UNREAD)
+  link      String?
+  entityId  String?
+  createdAt DateTime           @default(now())
+
+  @@index([userId, createdAt])
+}
+
+
+// Bộ đếm rate limit dùng chung giữa các tiến trình/instance (thay cho Map trong bộ nhớ)
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime @db.Timestamptz(3)
+}

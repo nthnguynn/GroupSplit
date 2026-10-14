@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    restart: always
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - AUTH_TRUST_HOST=true
+      - ZALO_BOT_TOKEN=${ZALO_BOT_TOKEN}
+      - ZALO_BOT_SECRET_TOKEN=${ZALO_BOT_SECRET_TOKEN}
+      - WEB_CONCURRENCY=${WEB_CONCURRENCY:-}              # Số worker (trống = số nhân CPU, tối đa 16) — xem server.mjs
+      - DB_CONNECTION_BUDGET=${DB_CONNECTION_BUDGET:-}    # Tổng kết nối DB cho mọi worker (trống = 80); giảm nếu Postgres dùng chung
+      - TRUSTED_PROXY_COUNT=${TRUSTED_PROXY_COUNT:-}      # Số reverse proxy trước app (trống = 1); 2 nếu có Cloudflare → NPM
+    volumes:
+      - ./uploads:/app/public/uploads                     # Bind mount lưu trữ ảnh avatar thực tế của người dùng
+    networks:
+      - proxy-net                                         # Network chung kết nối với Proxy (Nginx Proxy Manager, Traefik...)
+    # Không expose port ra ngoài máy host (bảo mật tối đa, traffic đi hoàn toàn qua proxy network)
+
+networks:
+  proxy-net:
+    external: true
+    name: proxy                                           # Hãy đổi thành tên network proxy thật trên Portainer của bạn (ví dụ: proxy, nginx-pm...)
