@@ -1,7 +1,8 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
 import { authConfig } from "./auth.config";
+import { verifyPassword } from "@/lib/password";
+import { verifyLoginTicket } from "@/lib/login-ticket";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -11,25 +12,26 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       credentials: {
         username: { label: "Username", type: "text" },
         password: { label: "Password", type: "password" },
+        // Vé từ /api/auth/login-check (đã kiểm tra captcha + mật khẩu) → khỏi chạy bcrypt lần 2
+        ticket: { type: "hidden" },
       },
       async authorize(credentials) {
-        if (!credentials?.username || !credentials?.password) return null;
-
         const { prisma } = await import("@/lib/prisma");
 
-        const usernameStr = (credentials.username as string).trim();
-        const user = await prisma.user.findUnique({
-          where: { username: usernameStr },
-        });
-
-        if (!user) return null;
-
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash
-        );
-
-        if (!isValid) return null;
+        let user;
+        if (typeof credentials?.ticket === "string" && credentials.ticket) {
+          const userId = verifyLoginTicket(credentials.ticket);
+          if (!userId) return null;
+          user = await prisma.user.findUnique({ where: { id: userId } });
+          if (!user) return null;
+        } else {
+          if (!credentials?.username || !credentials?.password) return null;
+          user = await prisma.user.findUnique({
+            where: { username: (credentials.username as string).trim() },
+          });
+          if (!user) return null;
+          if (!(await verifyPassword(credentials.password as string, user.passwordHash))) return null;
+        }
 
         // Quyền Admin chỉ dựa vào cột role trong DB (không hardcode username)
         const userRole = user.role;

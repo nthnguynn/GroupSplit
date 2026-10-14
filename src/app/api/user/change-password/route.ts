@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import { sendPasswordChangeOtpEmail } from "@/lib/email";
 import { sendPasswordChangeZaloOtp } from "@/lib/zalo";
 
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    const isMatch = await verifyPassword(currentPassword, user.passwordHash);
     if (!isMatch) {
       return NextResponse.json(
         { error: "Mật khẩu hiện tại không chính xác" },
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
       chosenChannel = "zalo";
     }
 
-    const newPasswordHash = await bcrypt.hash(newPassword, 12);
+    const newPasswordHash = await hashPassword(newPassword);
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
     const otpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 phút
 

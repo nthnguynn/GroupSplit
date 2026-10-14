@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { hashPassword, needsRehash, verifyPassword } from "@/lib/password";
+import { createLoginTicket } from "@/lib/login-ticket";
 import { rateLimit } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
 import { verifyCaptcha } from "@/lib/captcha";
@@ -45,7 +46,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const isValid = await bcrypt.compare(password, user.passwordHash);
+    const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
       return NextResponse.json(
         { code: "INVALID_CREDENTIALS", error: "Tên đăng nhập hoặc mật khẩu không chính xác" },
@@ -70,7 +71,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    return NextResponse.json({ success: true });
+    // Hash cũ (cost 12) chậm ~4 lần → băm lại với cost hiện tại, sau khi đã trả response
+    if (needsRehash(user.passwordHash)) {
+      after(async () => {
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { passwordHash: await hashPassword(password) },
+        });
+      });
+    }
+
+    // Vé đăng nhập để signIn không phải kiểm tra mật khẩu (bcrypt) lần thứ hai
+    return NextResponse.json({ success: true, ticket: createLoginTicket(user.id) });
   } catch (err: any) {
     console.error("Login check error:", err);
     return NextResponse.json(

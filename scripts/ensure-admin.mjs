@@ -32,7 +32,7 @@ try {
       // Không nâng quyền tài khoản người khác đã đăng ký trùng tên
       console.warn(`> Không tạo Admin: username "${username}" đã có người đăng ký — đặt ADMIN_USERNAME khác`);
     } else {
-      const passwordHash = await bcrypt.hash(password, 12);
+      const passwordHash = await bcrypt.hash(password, 10);
       await client.query(
         `INSERT INTO "User" (id, username, "displayName", "passwordHash", role, "isEmailVerified")
          VALUES ($1, $2, $3, $4, 'ADMIN', true)`,

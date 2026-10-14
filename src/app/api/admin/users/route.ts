@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { hashPassword } from "@/lib/password";
 
 async function verifyAdmin() {
   const session = await auth();
@@ -86,7 +86,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     if (newPassword && newPassword.trim().length >= 6) {
-      updateData.passwordHash = await bcrypt.hash(newPassword.trim(), 12);
+      updateData.passwordHash = await hashPassword(newPassword.trim());
     }
 
     const updated = await prisma.user.update({

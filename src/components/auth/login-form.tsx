@@ -65,21 +65,19 @@ export function LoginForm() {
         return;
       }
 
-      // 2. Nếu thông tin và trạng thái kích hoạt đều hợp lệ, tiến hành tạo phiên đăng nhập NextAuth
+      // 2. Tạo phiên đăng nhập bằng vé login-check vừa cấp (server không phải kiểm tra mật khẩu lần 2)
       const result = await signIn("credentials", {
-        username,
-        password,
+        ticket: checkData.ticket,
         redirect: false,
       });
 
-      setLoading(false);
-
       if (result?.error) {
+        setLoading(false);
         toast.error("Không thể hoàn tất phiên đăng nhập");
       } else {
         toast.success("Đăng nhập thành công!");
-        router.push("/dashboard");
-        router.refresh();
+        // Giữ trạng thái loading đến khi trang mới hiện; replace để nút Back không quay lại trang đăng nhập
+        router.replace("/dashboard");
       }
     } catch (err: any) {
       setLoading(false);

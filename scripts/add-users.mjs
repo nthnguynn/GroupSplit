@@ -46,7 +46,7 @@ try {
     await client.query(
       `INSERT INTO "User" (id, username, "displayName", "passwordHash", role, "isEmailVerified")
        VALUES ($1, $2, $3, $4, 'USER', true)`,
-      [randomUUID(), username, displayName, await bcrypt.hash(password, 12)]
+      [randomUUID(), username, displayName, await bcrypt.hash(password, 10)]
     );
     results.push({ username, displayName, password });
   }
