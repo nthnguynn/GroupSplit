@@ -65,7 +65,7 @@ export function DebtBreakdownDialog({
   const [activeTab, setActiveTab] = useState<"PAYER" | "RECEIVER">("PAYER");
   const [showAllHistory, setShowAllHistory] = useState(false);
 
-  // Hoá đơn giữa 2 người chỉ được tải khi mở hộp thoại (không gửi sẵn toàn bộ hoá đơn nhóm)
+  // Hóa đơn giữa 2 người chỉ được tải khi mở hộp thoại (không gửi sẵn toàn bộ hóa đơn nhóm)
   const pairKey = debt ? `${debt.fromUserId}:${debt.toUserId}` : null;
   const [loaded, setLoaded] = useState<{ key: string; expenses: BreakdownExpense[] } | null>(null);
 

@@ -91,10 +91,10 @@ export async function DELETE(
 
     if (!group) return NextResponse.json({ error: "Nhóm không tồn tại" }, { status: 404 });
 
-    // Chỉ Trưởng nhóm mới có quyền xoá nhóm
+    // Chỉ Trưởng nhóm mới có quyền xóa nhóm
     if (group.ownerId !== userId) {
       return NextResponse.json(
-        { error: "Chỉ Trưởng nhóm mới có quyền xoá nhóm này" },
+        { error: "Chỉ Trưởng nhóm mới có quyền xóa nhóm này" },
         { status: 403 }
       );
     }
@@ -104,7 +104,7 @@ export async function DELETE(
       .filter((uid) => uid !== userId);
 
     await prisma.$transaction(async (tx) => {
-      // 1. Xoá splits của các hoá đơn trong nhóm
+      // 1. Xóa splits của các hóa đơn trong nhóm
       const expenses = await tx.expense.findMany({
         where: { groupId },
         select: { id: true },
@@ -119,23 +119,23 @@ export async function DELETE(
         });
       }
 
-      // 2. Xoá settlements
+      // 2. Xóa settlements
       await tx.settlement.deleteMany({ where: { groupId } });
 
-      // 3. Xoá fund allocations
+      // 3. Xóa fund allocations
       await tx.fundAllocation.deleteMany({ where: { groupId } });
 
-      // 4. Xoá categories
+      // 4. Xóa categories
       await tx.category.deleteMany({ where: { groupId } });
 
-      // 5. Xoá group invitations & join requests
+      // 5. Xóa group invitations & join requests
       await tx.groupInvitation.deleteMany({ where: { groupId } });
       await tx.groupJoinRequest.deleteMany({ where: { groupId } });
 
-      // 6. Xoá members
+      // 6. Xóa members
       await tx.groupMember.deleteMany({ where: { groupId } });
 
-      // 7. Xoá group
+      // 7. Xóa group
       await tx.group.delete({ where: { id: groupId } });
     });
 
@@ -145,7 +145,7 @@ export async function DELETE(
       createNotification({
         userId: memberId,
         title: `Nhóm đã bị giải tán`,
-        content: `Trưởng nhóm đã giải tán và xoá nhóm "${group.name}".`,
+        content: `Trưởng nhóm đã giải tán và xóa nhóm "${group.name}".`,
         type: "MEMBER_LEFT",
         link: `/groups`,
       }).catch(console.error);
@@ -156,12 +156,12 @@ export async function DELETE(
 
     return NextResponse.json({
       success: true,
-      message: `Đã xoá nhóm "${group.name}" thành công`,
+      message: `Đã xóa nhóm "${group.name}" thành công`,
     });
   } catch (err: any) {
-    console.error("Lỗi khi xoá nhóm:", err);
+    console.error("Lỗi khi xóa nhóm:", err);
     return NextResponse.json(
-      { error: err.message || "Lỗi máy chủ khi xoá nhóm" },
+      { error: err.message || "Lỗi máy chủ khi xóa nhóm" },
       { status: 500 }
     );
   }

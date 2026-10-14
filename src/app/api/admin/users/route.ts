@@ -67,10 +67,10 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Không tìm thấy người dùng" }, { status: 404 });
     }
 
-    // Không cho Admin tự hạ quyền / huỷ xác thực chính mình (tránh mất hết tài khoản Admin)
+    // Không cho Admin tự hạ quyền / hủy xác thực chính mình (tránh mất hết tài khoản Admin)
     if (userId === admin.id && (role === "USER" || isEmailVerified === false)) {
       return NextResponse.json(
-        { error: "Không thể tự hạ quyền hoặc huỷ xác thực tài khoản của chính bạn" },
+        { error: "Không thể tự hạ quyền hoặc hủy xác thực tài khoản của chính bạn" },
         { status: 400 }
       );
     }

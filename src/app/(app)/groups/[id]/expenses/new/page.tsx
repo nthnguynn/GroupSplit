@@ -5,7 +5,7 @@ import { notFound, redirect } from "next/navigation";
 import { AddExpenseForm } from "@/components/expenses/add-expense-form";
 
 export const metadata = {
-  title: "Thêm hoá đơn - GroupSplit",
+  title: "Thêm hóa đơn - GroupSplit",
 };
 
 export default async function NewExpensePage({
@@ -32,7 +32,7 @@ export default async function NewExpensePage({
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Thêm hoá đơn</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Thêm hóa đơn</h1>
         <p className="text-muted-foreground text-sm">
           Nhóm: <span className="font-medium text-foreground">{group.name}</span>
         </p>

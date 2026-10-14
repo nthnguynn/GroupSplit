@@ -463,7 +463,7 @@ export function SepayWizardDialog({
                 <div>
                   <AlertTitle className="font-semibold text-foreground text-xs">Xác nhận tự động gạch nợ</AlertTitle>
                   <AlertDescription className="text-muted-foreground mt-0.5 leading-relaxed">
-                    Sau khi bấm **Hoàn tất & Lưu cài đặt**, khi người khác quét mã QR chuyển khoản đúng nội dung hóa đơn, SePay sẽ tự động gạch nợ thành công cho bạn.
+                    Sau khi bấm <strong className="font-semibold text-foreground">Hoàn tất & Lưu cài đặt</strong>, mọi khoản chuyển khoản qua mã QR đúng nội dung sẽ được SePay tự động gạch nợ cho bạn.
                   </AlertDescription>
                 </div>
               </Alert>

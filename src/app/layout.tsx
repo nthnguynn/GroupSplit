@@ -17,7 +17,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "GroupSplit - Chia tiền nhóm dễ dàng",
   description:
-    "Ứng dụng theo dõi chi tiêu nhóm, chia hoá đơn và quản lý dư nợ giữa bạn bè.",
+    "Ứng dụng theo dõi chi tiêu nhóm, chia hóa đơn và quản lý dư nợ giữa bạn bè.",
   keywords: ["chia tiền", "nhóm", "theo dõi chi tiêu", "group split"],
   icons: {
     icon: [

@@ -3,8 +3,8 @@
  * một nhóm "[BENCH]" với nhiều khoản chi, splits, thanh toán và thông báo.
  *
  * Chạy:  bun run bench:seed
- * Tuỳ chỉnh: BENCH_MEMBERS=20 BENCH_EXPENSES=5000 bun run bench:seed
- * Chạy lại sẽ xoá nhóm [BENCH] cũ và tạo mới.
+ * Tùy chỉnh: BENCH_MEMBERS=20 BENCH_EXPENSES=5000 bun run bench:seed
+ * Chạy lại sẽ xóa nhóm [BENCH] cũ và tạo mới.
  */
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -69,13 +69,13 @@ async function main() {
   const owner = users[0];
   console.log(`✅ ${users.length} user (mật khẩu: ${PASSWORD})`);
 
-  // 2. Xoá nhóm bench cũ
+  // 2. Xóa nhóm bench cũ
   const oldGroups = await prisma.group.findMany({
     where: { name: GROUP_NAME, ownerId: owner.id },
     select: { id: true },
   });
   for (const g of oldGroups) await deleteBenchGroup(g.id);
-  if (oldGroups.length) console.log(`🧹 Đã xoá ${oldGroups.length} nhóm [BENCH] cũ`);
+  if (oldGroups.length) console.log(`🧹 Đã xóa ${oldGroups.length} nhóm [BENCH] cũ`);
 
   // 3. Nhóm + thành viên
   const group = await prisma.group.create({

@@ -1,7 +1,7 @@
 import axios from "axios";
 import { prisma } from "@/lib/prisma";
 
-/** Khoá SystemSetting lưu secret đã đăng ký với Zalo (set-webhook) để webhook xác thực request. */
+/** Khóa SystemSetting lưu secret đã đăng ký với Zalo (set-webhook) để webhook xác thực request. */
 export const ZALO_WEBHOOK_SECRET_SETTING = "ZALO_WEBHOOK_SECRET";
 
 

@@ -136,7 +136,7 @@ export default async function LandingPage() {
               </div>
               <h3 className="font-bold text-base mb-2">Chia hóa đơn linh hoạt</h3>
               <p className="text-xs leading-relaxed text-muted-foreground">
-                Hỗ trợ chia đều cho cả nhóm hoặc chia riêng biệt từng người theo **Số tiền cụ thể** hoặc **Tỷ lệ phần trăm (%)** tùy chỉnh.
+                Chia đều cho cả nhóm, hoặc chia riêng từng người theo <strong className="font-semibold text-foreground">số tiền</strong> hay <strong className="font-semibold text-foreground">tỷ lệ phần trăm</strong>.
               </p>
             </div>
 

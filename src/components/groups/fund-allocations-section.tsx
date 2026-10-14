@@ -373,7 +373,7 @@ export function FundAllocationsSection({
                   }}
                   className="h-9 text-xs text-destructive hover:bg-destructive/5 shrink-0"
                 >
-                  Xoá lọc
+                  Xóa lọc
                 </Button>
               )}
             </div>
@@ -512,7 +512,7 @@ export function FundAllocationsSection({
               }}
               className="text-xs cursor-pointer"
             >
-              Xoá bộ lọc
+              Xóa bộ lọc
             </Button>
           </CardContent>
         </Card>

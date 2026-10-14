@@ -128,12 +128,12 @@ export async function DELETE(
     const isContributor = contribution.userId === userId;
 
     if (!isOwner && !isContributor) {
-      return NextResponse.json({ error: "Bạn không có quyền xoá khoản góp quỹ này" }, { status: 403 });
+      return NextResponse.json({ error: "Bạn không có quyền xóa khoản góp quỹ này" }, { status: 403 });
     }
 
-    // Nếu người đóng góp muốn xoá, chỉ cho phép khi vẫn PENDING
+    // Nếu người đóng góp muốn xóa, chỉ cho phép khi vẫn PENDING
     if (isContributor && !isOwner && contribution.status === "CONFIRMED") {
-      return NextResponse.json({ error: "Khoản góp quỹ đã được xác nhận, không thể xoá" }, { status: 400 });
+      return NextResponse.json({ error: "Khoản góp quỹ đã được xác nhận, không thể xóa" }, { status: 400 });
     }
 
     await prisma.fundContribution.delete({

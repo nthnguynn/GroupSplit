@@ -47,11 +47,11 @@ export function RemoveMemberButton({
       setLoading(false);
 
       if (res.ok) {
-        toast.success(data.message || `Đã xoá ${memberDisplayName} khỏi nhóm`);
+        toast.success(data.message || `Đã xóa ${memberDisplayName} khỏi nhóm`);
         setOpen(false);
         router.refresh();
       } else {
-        toast.error(data.error || "Không thể xoá thành viên");
+        toast.error(data.error || "Không thể xóa thành viên");
       }
     } catch (err) {
       setLoading(false);
@@ -66,11 +66,11 @@ export function RemoveMemberButton({
         variant="ghost"
         size="sm"
         className="h-8 px-2 text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 gap-1"
-        title="Xoá thành viên khỏi nhóm"
+        title="Xóa thành viên khỏi nhóm"
         onClick={() => setOpen(true)}
       >
         <UserMinus className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Xoá</span>
+        <span className="hidden sm:inline">Xóa</span>
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -78,25 +78,25 @@ export function RemoveMemberButton({
           <DialogHeader>
             <DialogTitle className="text-destructive flex items-center gap-2">
               <UserMinus className="h-5 w-5" />
-              Xác nhận xoá thành viên
+              Xác nhận xóa thành viên
             </DialogTitle>
             <DialogDescription className="space-y-3 pt-2 text-sm text-foreground">
               <div>
-                Bạn có chắc chắn muốn xoá thành viên <strong>&quot;{memberDisplayName}&quot;</strong> khỏi nhóm không?
+                Bạn có chắc chắn muốn xóa thành viên <strong>&quot;{memberDisplayName}&quot;</strong> khỏi nhóm không?
               </div>
 
               {hasUnsettledDebt ? (
                 <div className="p-3 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-xs flex items-start gap-2">
                   <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
                   <div>
-                    <strong>Chưa thể xoá:</strong> Thành viên này vẫn còn công nợ chưa thanh toán hết (Dư nợ:{" "}
+                    <strong>Chưa thể xóa:</strong> Thành viên này vẫn còn công nợ chưa thanh toán hết (Dư nợ:{" "}
                     <strong>{memberBalance > 0 ? `+${formatVND(memberBalance)}` : formatVND(memberBalance)}</strong>
-                    ). Cần thanh toán nợ về 0đ trước khi xoá khỏi nhóm.
+                    ). Cần thanh toán nợ về 0đ trước khi xóa khỏi nhóm.
                   </div>
                 </div>
               ) : (
                 <div className="p-3 rounded-lg border bg-muted/50 text-xs text-muted-foreground leading-relaxed">
-                  ✓ <strong>Bảo toàn dữ liệu:</strong> Tất cả hoá đơn cũ trong nhóm có liên quan đến thành viên này vẫn sẽ <strong>hiển thị tên người đấy bình thường</strong>. Thành viên này chỉ không thể tham gia vào các hoá đơn mới hay xem nhóm nữa.
+                  ✓ <strong>Bảo toàn dữ liệu:</strong> Tất cả hóa đơn cũ trong nhóm có liên quan đến thành viên này vẫn sẽ <strong>hiển thị tên người đấy bình thường</strong>. Thành viên này chỉ không thể tham gia vào các hóa đơn mới hay xem nhóm nữa.
                 </div>
               )}
             </DialogDescription>
@@ -108,7 +108,7 @@ export function RemoveMemberButton({
               onClick={() => setOpen(false)}
               disabled={loading}
             >
-              Huỷ
+              Hủy
             </Button>
             <Button
               type="button"
@@ -125,7 +125,7 @@ export function RemoveMemberButton({
               ) : (
                 <>
                   <UserMinus className="h-4 w-4" />
-                  Xoá khỏi nhóm
+                  Xóa khỏi nhóm
                 </>
               )}
             </Button>

@@ -8,7 +8,7 @@
  * Chạy:
  *   bun run bench:cpu
  *
- * Tuỳ chỉnh:
+ * Tùy chỉnh:
  *   CPUS          các mức CPU cần đo, mặc định "1,2,4,8"
  *   IMAGE         image cần đo, mặc định groupsplit:capacity
  *   DURATION      số giây đo mỗi trang, mặc định 10

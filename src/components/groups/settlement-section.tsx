@@ -280,7 +280,7 @@ export function SettlementSection({
                 }}
                 className="h-8 text-xs text-destructive hover:bg-destructive/5 shrink-0 self-start sm:self-auto"
               >
-                Xoá lọc
+                Xóa lọc
               </Button>
             )}
           </div>

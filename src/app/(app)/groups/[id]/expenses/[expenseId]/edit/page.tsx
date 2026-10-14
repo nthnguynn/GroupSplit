@@ -12,7 +12,7 @@ import Link from "next/link";
 import { formatDate } from "@/lib/utils/format";
 
 export const metadata = {
-  title: "Sửa hoá đơn - GroupSplit",
+  title: "Sửa hóa đơn - GroupSplit",
 };
 
 export default async function EditExpensePage({
@@ -42,7 +42,7 @@ export default async function EditExpensePage({
 
   if (!group || !expense) notFound();
 
-  // Kiểm tra hoá đơn có thuộc đúng nhóm không
+  // Kiểm tra hóa đơn có thuộc đúng nhóm không
   if (expense.groupId !== id) notFound();
 
   const isOwner = group.ownerId === userId;
@@ -63,7 +63,7 @@ export default async function EditExpensePage({
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Bạn không phải là người tạo hoá đơn này và cũng không phải là Trưởng nhóm.
+              Bạn không phải là người tạo hóa đơn này và cũng không phải là Trưởng nhóm.
             </p>
             <Button asChild variant="outline">
               <Link href={`/groups/${id}`}>
@@ -77,7 +77,7 @@ export default async function EditExpensePage({
     );
   }
 
-  // Kiểm tra xem hoá đơn đã phát sinh thanh toán nợ liên quan chưa
+  // Kiểm tra xem hóa đơn đã phát sinh thanh toán nợ liên quan chưa
   const debtorIds = expense.splits
     .map((s) => s.userId)
     .filter((uid) => uid !== expense.paidById);
@@ -106,15 +106,15 @@ export default async function EditExpensePage({
           <CardHeader>
             <CardTitle className="text-amber-600 dark:text-amber-400 flex items-center gap-2">
               <Clock className="h-5 w-5" />
-              Hoá đơn đã bị khoá chỉnh sửa
+              Hóa đơn đã bị khóa chỉnh sửa
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-foreground">
-              Hoá đơn <strong>&quot;{expense.title}&quot;</strong> đã phát sinh khoản thanh toán nợ liên quan giữa người chi trả và các thành viên chia tiền.
+              Hóa đơn <strong>&quot;{expense.title}&quot;</strong> đã phát sinh khoản thanh toán nợ liên quan giữa người chi trả và các thành viên chia tiền.
             </p>
             <p className="text-xs text-muted-foreground">
-              Nhằm đảm bảo tính chính xác và toàn vẹn của sổ nợ và các giao dịch chuyển tiền đã được xác nhận, hoá đơn này không thể chỉnh sửa hoặc xoá được nữa.
+              Nhằm đảm bảo tính chính xác và toàn vẹn của sổ nợ và các giao dịch chuyển tiền đã được xác nhận, hóa đơn này không thể chỉnh sửa hoặc xóa được nữa.
             </p>
             <Button asChild variant="default" className="mt-2">
               <Link href={`/groups/${id}`}>
@@ -132,7 +132,7 @@ export default async function EditExpensePage({
     <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa hoá đơn</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Chỉnh sửa hóa đơn</h1>
           <p className="text-muted-foreground text-sm">
             Nhóm: <span className="font-medium text-foreground">{group.name}</span>
           </p>

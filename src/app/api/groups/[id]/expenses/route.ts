@@ -37,7 +37,7 @@ export async function POST(
     return NextResponse.json({ error: "Thiếu thông tin" }, { status: 400 });
   }
 
-  // Tự động duyệt hoá đơn nếu do chính Trưởng nhóm tạo
+  // Tự động duyệt hóa đơn nếu do chính Trưởng nhóm tạo
   const isAutoApproved =
     membership.role === "OWNER" ||
     group.ownerId === userId;
@@ -156,7 +156,7 @@ ${shareLine ? `${shareLine}\n` : ""}👤 Người chi: ${expense.paidBy.displayN
   } catch (error: any) {
     console.error("Create expense error:", error);
     return NextResponse.json(
-      { error: error.message || "Lỗi hệ thống khi tạo hoá đơn" },
+      { error: error.message || "Lỗi hệ thống khi tạo hóa đơn" },
       { status: 500 }
     );
   }

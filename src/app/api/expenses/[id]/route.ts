@@ -6,7 +6,7 @@ import { createNotification } from "@/lib/notifications";
 import { formatVND } from "@/lib/utils/format";
 import { sendUserZaloNotification, sendMultipleUsersZaloNotification } from "@/lib/zalo";
 
-// Helper kiểm tra xem hoá đơn đã phát sinh thanh toán (Settlement) liên quan chưa
+// Helper kiểm tra xem hóa đơn đã phát sinh thanh toán (Settlement) liên quan chưa
 async function isExpenseLockedBySettlement(
   groupId: string,
   paidById: string,
@@ -76,7 +76,7 @@ export async function GET(
   });
 
   if (!expense) {
-    return NextResponse.json({ error: "Không tìm thấy hoá đơn" }, { status: 404 });
+    return NextResponse.json({ error: "Không tìm thấy hóa đơn" }, { status: 404 });
   }
 
   // Check if current user belongs to group
@@ -120,7 +120,7 @@ export async function PUT(
   });
 
   if (!expense) {
-    return NextResponse.json({ error: "Không tìm thấy hoá đơn" }, { status: 404 });
+    return NextResponse.json({ error: "Không tìm thấy hóa đơn" }, { status: 404 });
   }
 
   // Check 1: User must be creator or group owner
@@ -128,12 +128,12 @@ export async function PUT(
   const isCreator = expense.createdById === userId;
   if (!isCreator && !isOwner) {
     return NextResponse.json(
-      { error: "Bạn không có quyền chỉnh sửa hoá đơn này" },
+      { error: "Bạn không có quyền chỉnh sửa hóa đơn này" },
       { status: 403 }
     );
   }
 
-  // Check 2: Chưa ai thanh toán tiền liên quan đến hoá đơn này
+  // Check 2: Chưa ai thanh toán tiền liên quan đến hóa đơn này
   const isLocked = await isExpenseLockedBySettlement(
     expense.groupId,
     expense.paidById,
@@ -145,7 +145,7 @@ export async function PUT(
     return NextResponse.json(
       {
         error:
-          "Không thể chỉnh sửa hoá đơn này vì đã có thành viên thanh toán nợ liên quan.",
+          "Không thể chỉnh sửa hóa đơn này vì đã có thành viên thanh toán nợ liên quan.",
       },
       { status: 400 }
     );
@@ -176,7 +176,7 @@ export async function PUT(
 
   try {
     const updatedExpense = await prisma.$transaction(async (tx) => {
-      // 1. Xoá splits cũ
+      // 1. Xóa splits cũ
       await tx.expenseSplit.deleteMany({
         where: { expenseId },
       });
@@ -286,7 +286,7 @@ ${shareLine ? `${shareLine}\n` : ""}👤 Người chi: ${updatedExpense.paidBy.d
   } catch (error: any) {
     console.error("Update expense error:", error);
     return NextResponse.json(
-      { error: error.message || "Lỗi hệ thống khi cập nhật hoá đơn" },
+      { error: error.message || "Lỗi hệ thống khi cập nhật hóa đơn" },
       { status: 500 }
     );
   }
@@ -317,19 +317,19 @@ export async function DELETE(
   });
 
   if (!expense) {
-    return NextResponse.json({ error: "Không tìm thấy hoá đơn" }, { status: 404 });
+    return NextResponse.json({ error: "Không tìm thấy hóa đơn" }, { status: 404 });
   }
 
-  // Phân quyền: Chỉ duy nhất Trưởng nhóm mới có quyền xoá hoá đơn
+  // Phân quyền: Chỉ duy nhất Trưởng nhóm mới có quyền xóa hóa đơn
   const isOwner = expense.group.ownerId === userId;
   if (!isOwner) {
     return NextResponse.json(
-      { error: "Chỉ Trưởng nhóm mới có quyền xoá hoá đơn" },
+      { error: "Chỉ Trưởng nhóm mới có quyền xóa hóa đơn" },
       { status: 403 }
     );
   }
 
-  // Điều kiện: Chưa ai thanh toán tiền liên quan đến hoá đơn này
+  // Điều kiện: Chưa ai thanh toán tiền liên quan đến hóa đơn này
   const isLocked = await isExpenseLockedBySettlement(
     expense.groupId,
     expense.paidById,
@@ -341,7 +341,7 @@ export async function DELETE(
     return NextResponse.json(
       {
         error:
-          "Không thể xoá hoá đơn này vì đã có thành viên thanh toán nợ liên quan.",
+          "Không thể xóa hóa đơn này vì đã có thành viên thanh toán nợ liên quan.",
       },
       { status: 400 }
     );
@@ -368,26 +368,26 @@ export async function DELETE(
     for (const targetUserId of notifyUserIds) {
       await createNotification({
         userId: targetUserId,
-        title: `Hóa đơn đã bị xoá`,
-        content: `Trưởng nhóm đã xoá hóa đơn "${expense.title}" (${formatVND(expense.amount)}) khỏi nhóm.`,
+        title: `Hóa đơn đã bị xóa`,
+        content: `Trưởng nhóm đã xóa hóa đơn "${expense.title}" (${formatVND(expense.amount)}) khỏi nhóm.`,
         type: "EXPENSE_REJECTED",
         link: `/groups/${expense.groupId}`,
       });
     }
 
     if (notifyUserIds.length > 0) {
-      const zaloMsg = `🗑️ [Hóa đơn đã bị xoá]
-📌 Trưởng nhóm đã xoá hoá đơn: "${expense.title}"
+      const zaloMsg = `🗑️ [Hóa đơn đã bị xóa]
+📌 Trưởng nhóm đã xóa hóa đơn: "${expense.title}"
 💰 Số tiền: ${formatVND(expense.amount)}
-👤 Người xoá: Trưởng nhóm`;
+👤 Người xóa: Trưởng nhóm`;
       sendMultipleUsersZaloNotification(notifyUserIds, zaloMsg);
     }
 
-    return NextResponse.json({ success: true, message: "Đã xoá hoá đơn thành công" });
+    return NextResponse.json({ success: true, message: "Đã xóa hóa đơn thành công" });
   } catch (error: any) {
     console.error("Delete expense error:", error);
     return NextResponse.json(
-      { error: error.message || "Lỗi hệ thống khi xoá hoá đơn" },
+      { error: error.message || "Lỗi hệ thống khi xóa hóa đơn" },
       { status: 500 }
     );
   }

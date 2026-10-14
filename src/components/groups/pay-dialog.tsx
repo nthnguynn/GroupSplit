@@ -154,7 +154,7 @@ export function PayDialog({
     }
   }
 
-  // 3. Xác nhận chuyển khoản thủ công (Xoá nhãn QR_PENDING)
+  // 3. Xác nhận chuyển khoản thủ công (Xóa nhãn QR_PENDING)
   async function confirmManualTransfer() {
     if (!activePayment) return;
     setLoadingId("manual-confirm");
@@ -261,7 +261,7 @@ export function PayDialog({
           <DialogHeader>
             <DialogTitle className="text-center font-bold text-lg">Chọn hình thức trả nợ</DialogTitle>
             <DialogDescription className="text-center text-xs text-muted-foreground">
-              Bạn đang thực hiện trả nợ cho **{debt?.toUserName}** số tiền **{debt ? formatVND(debt.amount) : "0"}**
+              Bạn đang trả nợ cho <strong className="font-semibold text-foreground">{debt?.toUserName}</strong> số tiền <strong className="font-semibold text-foreground">{debt ? formatVND(debt.amount) : "0"}</strong>
             </DialogDescription>
           </DialogHeader>
 
@@ -287,7 +287,7 @@ export function PayDialog({
                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 flex gap-2 items-start text-xs text-amber-700 dark:text-amber-500">
                   <HelpCircle className="h-4 w-4 shrink-0 mt-0.5" />
                   <p className="leading-relaxed">
-                    Người nhận (**{debt.toUserName}**) chưa cấu hình thông tin tài khoản ngân hàng trong Cài đặt nên không thể tạo mã chuyển khoản VietQR tự động.
+                    <strong className="font-semibold text-foreground">{debt.toUserName}</strong> chưa cấu hình tài khoản ngân hàng trong Cài đặt, nên chưa thể tạo mã chuyển khoản VietQR.
                   </p>
                 </div>
               )}
@@ -432,7 +432,7 @@ export function PayDialog({
               ) : (
                 <div className="bg-primary/5 rounded-xl border border-primary/10 p-3 space-y-3">
                   <p className="text-[11px] text-muted-foreground leading-relaxed text-center">
-                    ℹ️ Người nhận là thành viên thường (hoặc chưa cấu hình SePay). Giao dịch này sẽ cần người nhận bấm **Xác nhận nhận tiền** thủ công sau khi bạn chuyển khoản thành công.
+                    Người nhận chưa bật SePay. Sau khi bạn chuyển khoản, người nhận cần bấm <strong className="font-semibold text-foreground">Xác nhận nhận tiền</strong> để gạch nợ.
                   </p>
                   <Button
                     className="w-full text-xs h-9 font-bold bg-primary text-primary-foreground hover:bg-primary/90 cursor-pointer"

@@ -69,7 +69,7 @@ export default async function DashboardPage({
   const formattedFrom = format(startDate, "yyyy-MM-dd");
   const formattedTo = format(endDate, "yyyy-MM-dd");
 
-  // Truy vấn danh sách hoá đơn trong khoảng thời gian đã được duyệt (APPROVED) và người dùng có phần chia (split)
+  // Truy vấn danh sách hóa đơn trong khoảng thời gian đã được duyệt (APPROVED) và người dùng có phần chia (split)
   let expenses: any[] = [];
   try {
     expenses = await prisma.expense.findMany({

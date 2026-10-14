@@ -523,7 +523,7 @@ export default function AdminSettingsPage() {
                 </div>
               ) : (
                 filteredUsers.map((u) => {
-                  // Không cho tự hạ quyền / huỷ xác thực chính mình (tránh tự khoá quyền Admin)
+                  // Không cho tự hạ quyền / hủy xác thực chính mình (tránh tự khóa quyền Admin)
                   const isSelf = u.id === currentUserId;
                   const isUpdating = updatingUserId === u.id;
 
@@ -615,7 +615,7 @@ export default function AdminSettingsPage() {
                               className="h-8 text-xs gap-1 font-medium"
                             >
                               <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                              Reset Pass
+                              Đặt lại mật khẩu
                             </Button>
 
                         {!isSelf && (
@@ -632,7 +632,7 @@ export default function AdminSettingsPage() {
                               }
                               className="h-8 text-xs font-semibold"
                             >
-                              {u.role === "ADMIN" ? "Hạ cấp User" : "Set Admin"}
+                              {u.role === "ADMIN" ? "Hạ quyền" : "Cấp quyền Admin"}
                             </Button>
                           </>
                         )}

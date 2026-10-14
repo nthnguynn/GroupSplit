@@ -56,7 +56,7 @@ export function CreateGroupForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="group-description">Mô tả (tuỳ chọn)</Label>
+            <Label htmlFor="group-description">Mô tả (tùy chọn)</Label>
             <Textarea
               id="group-description"
               name="description"
@@ -73,7 +73,7 @@ export function CreateGroupForm() {
               className="flex-1"
               onClick={() => router.back()}
             >
-              Huỷ
+              Hủy
             </Button>
             <Button type="submit" className="flex-1" disabled={loading}>
               {loading ? (

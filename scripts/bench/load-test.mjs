@@ -9,7 +9,7 @@
  * Chạy:
  *   bun run bench
  *
- * Tuỳ chỉnh qua biến môi trường:
+ * Tùy chỉnh qua biến môi trường:
  *   BASE_URL   mặc định http://localhost:3005
  *   STAGES     số kết nối đồng thời mỗi bậc, mặc định "10,50,100,200"
  *   DURATION   số giây mỗi bậc, mặc định 10

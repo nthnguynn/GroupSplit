@@ -57,7 +57,7 @@ interface Expense {
 }
 
 interface ExpensesListProps {
-  /** Hoá đơn chờ duyệt (đã lọc theo ngày) + hoá đơn đã xử lý của trang hiện tại — lọc/phân trang ở server */
+  /** Hóa đơn chờ duyệt (đã lọc theo ngày) + hóa đơn đã xử lý của trang hiện tại — lọc/phân trang ở server */
   expenses: Expense[];
   processedTotal: number;
   currentPage: number;
@@ -205,7 +205,7 @@ export function ExpensesList({
               <Calendar className="h-4 w-4 text-primary" />
               Bộ lọc khoảng thời gian
             </h4>
-            <p className="text-[11px] text-muted-foreground">Lọc danh sách hoá đơn của nhóm</p>
+            <p className="text-[11px] text-muted-foreground">Lọc danh sách hóa đơn của nhóm</p>
           </div>
           <div className="w-full md:w-auto flex items-stretch md:items-center justify-start md:justify-end">
             <DateRangePicker
@@ -217,14 +217,14 @@ export function ExpensesList({
         </CardContent>
       </Card>
 
-      {/* Mục hoá đơn cần duyệt (Cho Trưởng nhóm & Thành viên) */}
+      {/* Mục hóa đơn cần duyệt (Cho Trưởng nhóm & Thành viên) */}
       {pendingExpenses.length > 0 && (
         <div className="space-y-3 p-4 rounded-2xl border-2 border-amber-500/40 bg-amber-500/5 shadow-md">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Clock className="h-5 w-5 text-amber-500 animate-pulse" />
               <h3 className="font-extrabold text-sm sm:text-base text-amber-900 dark:text-amber-200">
-                Hoá đơn cần duyệt ({pendingExpenses.length})
+                Hóa đơn cần duyệt ({pendingExpenses.length})
               </h3>
             </div>
             {isOwner && (
@@ -334,11 +334,11 @@ export function ExpensesList({
         <Card className="border-dashed">
           <CardContent className="py-16 text-center">
             <Receipt className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
-            <p className="text-sm text-muted-foreground mb-3">Không có hoá đơn nào khớp bộ lọc</p>
+            <p className="text-sm text-muted-foreground mb-3">Không có hóa đơn nào khớp bộ lọc</p>
           </CardContent>
         </Card>
       ) : processedTotal === 0 && pendingExpenses.length > 0 ? (
-        <p className="text-xs text-center text-muted-foreground py-4">Tất cả hoá đơn hiện tại đang chờ duyệt ở trên.</p>
+        <p className="text-xs text-center text-muted-foreground py-4">Tất cả hóa đơn hiện tại đang chờ duyệt ở trên.</p>
       ) : (
         <div className={cn("space-y-6 transition-opacity", isNavigating && "opacity-60")}>
           {Object.entries(groupedExpenses).map(([monthHeader, list]) => (
@@ -450,7 +450,7 @@ export function ExpensesList({
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-4 px-1">
               <span className="text-xs text-muted-foreground">
-                Trang {currentPage} / {totalPages} (Tổng {processedTotal} hoá đơn đã duyệt)
+                Trang {currentPage} / {totalPages} (Tổng {processedTotal} hóa đơn đã duyệt)
               </span>
               <div className="flex items-center gap-2">
                 <Button

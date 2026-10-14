@@ -1,5 +1,5 @@
 /**
- * IP của client để làm khoá rate limit.
+ * IP của client để làm khóa rate limit.
  *
  * X-Forwarded-For có dạng "<client tự gửi>, ..., <IP mà proxy gần app nhất nhìn thấy>":
  * các phần đầu client giả mạo được (đổi header mỗi request là lách được rate limit),

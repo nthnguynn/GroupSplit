@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
   try {
     // Xác thực request thật sự đến từ Zalo: secret phải khớp ZALO_BOT_SECRET_TOKEN hoặc
     // secret Admin đã đăng ký qua /api/zalo/set-webhook. Không xác thực thì ai cũng giả được
-    // tin nhắn với chatId tuỳ ý (dò mã /setup, gửi /nodu thay người khác).
+    // tin nhắn với chatId tùy ý (dò mã /setup, gửi /nodu thay người khác).
     const incomingSecret = req.headers.get("x-bot-api-secret-token");
     if (headersObj["x-bot-api-secret-token"]) headersObj["x-bot-api-secret-token"] = "***";
 
@@ -305,7 +305,7 @@ ${qrImageUrl}`
           const code = tokenArg.replace(/\s+/g, "");
 
           // Chỉ liên kết bằng mã ngẫu nhiên còn hạn (KHÔNG nhận username — ai biết username cũng chiếm được).
-          // Kiểm tra mã + liên kết + xoá mã trong 1 lệnh để mã chỉ dùng được 1 lần.
+          // Kiểm tra mã + liên kết + xóa mã trong 1 lệnh để mã chỉ dùng được 1 lần.
           let targetUser: { id: string; username: string; displayName: string } | null = null;
           if (limiter.success && /^\d{6}$/.test(code)) {
             try {

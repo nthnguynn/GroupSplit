@@ -29,7 +29,7 @@ export async function PATCH(
 
   if (!expense) return NextResponse.json({ error: "Không tìm thấy" }, { status: 404 });
   if (expense.group.ownerId !== userId)
-    return NextResponse.json({ error: "Chỉ Trưởng nhóm mới có quyền duyệt hoá đơn" }, { status: 403 });
+    return NextResponse.json({ error: "Chỉ Trưởng nhóm mới có quyền duyệt hóa đơn" }, { status: 403 });
 
   const updated = await prisma.expense.update({
     where: { id: expenseId },

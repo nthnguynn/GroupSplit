@@ -26,7 +26,7 @@ export function ExpenseApproveButton({ expenseId }: ExpenseApproveButtonProps) {
     setLoading(null);
 
     if (res.ok) {
-      toast.success(action === "approve" ? "Đã duyệt hoá đơn!" : "Đã từ chối hoá đơn!");
+      toast.success(action === "approve" ? "Đã duyệt hóa đơn!" : "Đã từ chối hóa đơn!");
       router.refresh();
     } else {
       const data = await res.json();

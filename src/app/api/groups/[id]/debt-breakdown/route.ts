@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
-// GET: Hoá đơn đã duyệt giữa 2 người (?a=&b=) cho hộp thoại "Bảng kê chi tiết dư nợ".
-// Tải theo yêu cầu khi mở hộp thoại thay vì gửi toàn bộ hoá đơn của nhóm xuống trang.
+// GET: Hóa đơn đã duyệt giữa 2 người (?a=&b=) cho hộp thoại "Bảng kê chi tiết dư nợ".
+// Tải theo yêu cầu khi mở hộp thoại thay vì gửi toàn bộ hóa đơn của nhóm xuống trang.
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

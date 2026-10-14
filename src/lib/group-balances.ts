@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 
 /**
  * Số dư net của mọi người trong một nhóm — cùng quy tắc với calculateDebts (xem bên dưới),
- * nhưng để DB tổng hợp thay vì tải toàn bộ hoá đơn/splits về server.
+ * nhưng để DB tổng hợp thay vì tải toàn bộ hóa đơn/splits về server.
  */
 export async function getGroupNetBalances(groupId: string): Promise<Map<string, number>> {
   const rows = await prisma.$queryRaw<{ userId: string; balance: number }[]>`
@@ -49,10 +49,10 @@ export type UserGroupBalance = {
 
 /**
  * Số dư của một user trong từng nhóm đang tham gia, tính bằng SQL tổng hợp thay vì
- * tải toàn bộ hoá đơn/splits về rồi chạy calculateDebts. Phải khớp logic calculateDebts:
- *  - Hoá đơn APPROVED do thành viên chi: mỗi split chưa trả (isPaid = false) của người khác
+ * tải toàn bộ hóa đơn/splits về rồi chạy calculateDebts. Phải khớp logic calculateDebts:
+ *  - Hóa đơn APPROVED do thành viên chi: mỗi split chưa trả (isPaid = false) của người khác
  *    → người chi +amount, người được chia -amount.
- *  - Hoá đơn chi từ quỹ (FUND) do người khác Trưởng nhóm ứng → người ứng +amount, Trưởng nhóm -amount.
+ *  - Hóa đơn chi từ quỹ (FUND) do người khác Trưởng nhóm ứng → người ứng +amount, Trưởng nhóm -amount.
  *  - Settlement đã xác nhận: người chuyển +amount, người nhận -amount.
  *  - FundAllocation: người cấp -amount, người nhận +amount.
  */

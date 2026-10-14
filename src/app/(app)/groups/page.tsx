@@ -38,7 +38,7 @@ export default async function GroupsPage() {
       orderBy: { joinedAt: "desc" },
     });
 
-    // Tổng chi đã duyệt của từng nhóm — để DB cộng thay vì tải toàn bộ hoá đơn
+    // Tổng chi đã duyệt của từng nhóm — để DB cộng thay vì tải toàn bộ hóa đơn
     const totals = await prisma.expense.groupBy({
       by: ["groupId"],
       where: { groupId: { in: memberships.map((m) => m.group.id) }, status: "APPROVED" },

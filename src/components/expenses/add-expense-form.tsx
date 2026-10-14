@@ -442,23 +442,23 @@ export function AddExpenseForm({ groupId, members, currentUserId, initialExpense
       const data = await res.json();
 
       if (!res.ok) {
-        toast.error(data.error || (isEdit ? "Cập nhật hoá đơn thất bại" : "Thêm hoá đơn thất bại"));
+        toast.error(data.error || (isEdit ? "Cập nhật hóa đơn thất bại" : "Thêm hóa đơn thất bại"));
         setLoading(false);
       } else {
         toast.success(
           data?.status === "APPROVED"
             ? isEdit
-              ? "Đã cập nhật hoá đơn thành công!"
-              : "Đã thêm hoá đơn thành công!"
+              ? "Đã cập nhật hóa đơn thành công!"
+              : "Đã thêm hóa đơn thành công!"
             : isEdit
-            ? "Đã cập nhật hoá đơn! Đang chờ Trưởng nhóm duyệt lại."
-            : "Đã thêm hoá đơn! Đang chờ Trưởng nhóm duyệt."
+            ? "Đã cập nhật hóa đơn! Đang chờ Trưởng nhóm duyệt lại."
+            : "Đã thêm hóa đơn! Đang chờ Trưởng nhóm duyệt."
         );
         router.push(`/groups/${groupId}`);
         router.refresh();
       }
     } catch (err) {
-      console.error("Lỗi khi lưu hoá đơn:", err);
+      console.error("Lỗi khi lưu hóa đơn:", err);
       toast.error("Đã xảy ra lỗi kết nối, vui lòng thử lại");
       setLoading(false);
     }
@@ -472,7 +472,7 @@ export function AddExpenseForm({ groupId, members, currentUserId, initialExpense
           <div>
             <span className="font-semibold text-blue-600 dark:text-blue-400">Chế độ chỉnh sửa: </span>
             <span>
-              Bạn đang chỉnh sửa hoá đơn này (chưa có ai thanh toán nợ liên quan).
+              Bạn đang chỉnh sửa hóa đơn này (chưa có ai thanh toán nợ liên quan).
             </span>
           </div>
         </div>
@@ -482,7 +482,7 @@ export function AddExpenseForm({ groupId, members, currentUserId, initialExpense
         <CardContent className="pt-6 space-y-4">
           {/* Title */}
           <div className="space-y-2">
-            <Label htmlFor="expense-title">Tên hoá đơn *</Label>
+            <Label htmlFor="expense-title">Tên hóa đơn *</Label>
             <Input
               id="expense-title"
               name="title"
@@ -548,7 +548,7 @@ export function AddExpenseForm({ groupId, members, currentUserId, initialExpense
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="expense-desc">Ghi chú (tuỳ chọn)</Label>
+            <Label htmlFor="expense-desc">Ghi chú (tùy chọn)</Label>
             <Textarea
               id="expense-desc"
               name="description"
@@ -731,7 +731,7 @@ export function AddExpenseForm({ groupId, members, currentUserId, initialExpense
 
           {/* Member selection */}
           <div className="space-y-2">
-            <Label>Ai trong hoá đơn này?</Label>
+            <Label>Ai trong hóa đơn này?</Label>
             <div className="space-y-2">
               {members.map((m) => {
                 const isSelected = selectedMembers.has(m.userId);
@@ -907,7 +907,7 @@ export function AddExpenseForm({ groupId, members, currentUserId, initialExpense
           onClick={() => router.back()}
           disabled={loading}
         >
-          Huỷ
+          Hủy
         </Button>
         <Button 
           type="submit" 
@@ -923,7 +923,7 @@ export function AddExpenseForm({ groupId, members, currentUserId, initialExpense
           ) : isEdit ? (
             "Lưu thay đổi"
           ) : (
-            "Thêm hoá đơn"
+            "Thêm hóa đơn"
           )}
         </Button>
       </div>

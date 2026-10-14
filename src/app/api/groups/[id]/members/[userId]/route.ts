@@ -33,18 +33,18 @@ export async function DELETE(
 
   if (!group) return NextResponse.json({ error: "Nhóm không tồn tại" }, { status: 404 });
 
-  // 1. Phân quyền: Chỉ Trưởng nhóm mới có quyền xoá thành viên
+  // 1. Phân quyền: Chỉ Trưởng nhóm mới có quyền xóa thành viên
   if (group.ownerId !== currentUserId) {
     return NextResponse.json(
-      { error: "Chỉ Trưởng nhóm mới có quyền xoá thành viên khỏi nhóm" },
+      { error: "Chỉ Trưởng nhóm mới có quyền xóa thành viên khỏi nhóm" },
       { status: 403 }
     );
   }
 
-  // 2. Không thể tự xoá Trưởng nhóm
+  // 2. Không thể tự xóa Trưởng nhóm
   if (targetUserId === group.ownerId) {
     return NextResponse.json(
-      { error: "Không thể xoá Trưởng nhóm khỏi nhóm. Vui lòng chuyển quyền Trưởng nhóm trước nếu cần." },
+      { error: "Không thể xóa Trưởng nhóm khỏi nhóm. Vui lòng chuyển quyền Trưởng nhóm trước nếu cần." },
       { status: 400 }
     );
   }
@@ -58,7 +58,7 @@ export async function DELETE(
     );
   }
 
-  // 4. Kiểm tra công nợ của thành viên cần xoá
+  // 4. Kiểm tra công nợ của thành viên cần xóa
   const { balances } = calculateDebts(
     group.expenses,
     group.members,
@@ -72,14 +72,14 @@ export async function DELETE(
   if (Math.abs(memberBalance) > 0.01) {
     return NextResponse.json(
       {
-        error: `Không thể xoá thành viên này do vẫn còn công nợ chưa thanh toán hết (Dư nợ hiện tại: ${memberBalance > 0 ? "+" : ""}${memberBalance.toLocaleString("vi-VN")}đ). Cần thanh toán công nợ về 0đ trước khi xoá.`,
+        error: `Không thể xóa thành viên này do vẫn còn công nợ chưa thanh toán hết (Dư nợ hiện tại: ${memberBalance > 0 ? "+" : ""}${memberBalance.toLocaleString("vi-VN")}đ). Cần thanh toán công nợ về 0đ trước khi xóa.`,
       },
       { status: 400 }
     );
   }
 
   // 5. Đánh dấu thành viên đã rời nhóm (isLeft = true)
-  // Các hoá đơn cũ (Expense và ExpenseSplit) liên kết trực tiếp tới User nên vẫn hiển thị tên bình thường
+  // Các hóa đơn cũ (Expense và ExpenseSplit) liên kết trực tiếp tới User nên vẫn hiển thị tên bình thường
   await prisma.$transaction(async (tx) => {
     await tx.groupMember.update({
       where: { userId_groupId: { userId: targetUserId, groupId } },
@@ -98,11 +98,11 @@ export async function DELETE(
     }
   });
 
-  // 6. Gửi thông báo In-app cho thành viên bị xoá
+  // 6. Gửi thông báo In-app cho thành viên bị xóa
   await createNotification({
     userId: targetUserId,
-    title: `Bạn đã bị xoá khỏi nhóm`,
-    content: `Trưởng nhóm đã xoá bạn khỏi nhóm "${group.name}".`,
+    title: `Bạn đã bị xóa khỏi nhóm`,
+    content: `Trưởng nhóm đã xóa bạn khỏi nhóm "${group.name}".`,
     type: "MEMBER_LEFT",
     link: `/groups`,
     entityId: groupId,
@@ -111,13 +111,13 @@ export async function DELETE(
   // 7. Gửi thông báo Zalo nếu có
   sendUserZaloNotification(
     targetUserId,
-    `🚫 [Thông báo nhóm]\nTrưởng nhóm đã xoá bạn khỏi nhóm "${group.name}".`
+    `🚫 [Thông báo nhóm]\nTrưởng nhóm đã xóa bạn khỏi nhóm "${group.name}".`
   );
 
   // 8. Phát sóng sự kiện SSE cập nhật realtime cho nhóm
   eventEmitter.emit(`group:${groupId}`, { type: "REFRESH" });
 
   return NextResponse.json({
-    message: `Đã xoá thành viên ${membership.user.displayName} khỏi nhóm thành công`,
+    message: `Đã xóa thành viên ${membership.user.displayName} khỏi nhóm thành công`,
   });
 }

@@ -42,11 +42,11 @@ export function ExpenseDeleteButton({
       setLoading(false);
 
       if (res.ok) {
-        toast.success("Đã xoá hoá đơn thành công!");
+        toast.success("Đã xóa hóa đơn thành công!");
         setOpen(false);
         router.refresh();
       } else {
-        toast.error(data.error || "Không thể xoá hoá đơn");
+        toast.error(data.error || "Không thể xóa hóa đơn");
       }
     } catch (err) {
       setLoading(false);
@@ -61,11 +61,11 @@ export function ExpenseDeleteButton({
         variant="ghost"
         size="sm"
         className="h-7 px-2 text-xs text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 gap-1"
-        title="Xoá hoá đơn"
+        title="Xóa hóa đơn"
         onClick={() => setOpen(true)}
       >
         <Trash2 className="h-3 w-3" />
-        Xoá
+        Xóa
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
@@ -73,15 +73,15 @@ export function ExpenseDeleteButton({
           <DialogHeader>
             <DialogTitle className="text-destructive flex items-center gap-2">
               <Trash2 className="h-5 w-5" />
-              Xác nhận xoá hoá đơn
+              Xác nhận xóa hóa đơn
             </DialogTitle>
             <DialogDescription className="space-y-2 pt-2 text-sm text-foreground">
               <div>
-                Bạn có chắc chắn muốn xoá hoá đơn <strong>&quot;{expenseTitle}&quot;</strong> (
+                Bạn có chắc chắn muốn xóa hóa đơn <strong>&quot;{expenseTitle}&quot;</strong> (
                 <strong className="text-destructive">{formatVND(amount)}</strong>) không?
               </div>
               <div className="text-xs text-muted-foreground">
-                Lưu ý: Hoá đơn chỉ có thể xoá khi chưa có thành viên nào thanh toán nợ liên quan. Sau khi xoá, các khoản nợ phát sinh từ hoá đơn này sẽ bị huỷ bỏ hoàn toàn.
+                Lưu ý: Hóa đơn chỉ có thể xóa khi chưa có thành viên nào thanh toán nợ liên quan. Sau khi xóa, các khoản nợ phát sinh từ hóa đơn này sẽ bị hủy bỏ hoàn toàn.
               </div>
             </DialogDescription>
           </DialogHeader>
@@ -92,7 +92,7 @@ export function ExpenseDeleteButton({
               onClick={() => setOpen(false)}
               disabled={loading}
             >
-              Huỷ
+              Hủy
             </Button>
             <Button
               type="button"
@@ -104,12 +104,12 @@ export function ExpenseDeleteButton({
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Đang xoá...
+                  Đang xóa...
                 </>
               ) : (
                 <>
                   <Trash2 className="h-4 w-4" />
-                  Xoá vĩnh viễn
+                  Xóa vĩnh viễn
                 </>
               )}
             </Button>

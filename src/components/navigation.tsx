@@ -129,7 +129,7 @@ export function FloatingCreateGroupButton() {
   const href = isGroupDetail
     ? `/groups/${groupMatch[1]}/expenses/new`
     : "/groups/new";
-  const label = isGroupDetail ? "Thêm hoá đơn" : "Tạo nhóm mới";
+  const label = isGroupDetail ? "Thêm hóa đơn" : "Tạo nhóm mới";
 
   return (
     <Link

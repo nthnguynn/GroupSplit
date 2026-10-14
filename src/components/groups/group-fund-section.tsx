@@ -160,9 +160,9 @@ export function GroupFundSection({
     }
   }
 
-  // Huỷ / Xoá khoản góp quỹ nháp
+  // Hủy / Xóa khoản góp quỹ nháp
   async function handleDeleteContribution(id: string) {
-    if (!confirm("Bạn có chắc chắn muốn xoá yêu cầu góp quỹ này?")) return;
+    if (!confirm("Bạn có chắc chắn muốn xóa yêu cầu góp quỹ này?")) return;
     setLoadingId(id);
     try {
       const res = await fetch(`/api/fund-contributions/${id}`, {
@@ -171,7 +171,7 @@ export function GroupFundSection({
 
       setLoadingId(null);
       if (res.ok) {
-        toast.success("Đã xoá yêu cầu góp quỹ!");
+        toast.success("Đã xóa yêu cầu góp quỹ!");
         router.refresh();
       } else {
         const data = await res.json();
@@ -219,7 +219,7 @@ export function GroupFundSection({
               </p>
               <p className="text-xs text-muted-foreground font-medium pt-0.5">
                 {currentFundBalance > 0
-                  ? "Quỹ đang dồi dào, sẵn sàng cho các hoạt động và hoá đơn chi chung 🎉"
+                  ? "Quỹ đang dồi dào, sẵn sàng cho các hoạt động và hóa đơn chi chung 🎉"
                   : currentFundBalance < 0
                   ? "⚠️ Quỹ nhóm đang âm tiền, các thành viên vui lòng góp thêm quỹ!"
                   : "Quỹ hiện đang ở mức 0đ. Hãy bắt đầu đóng góp để tạo nguồn quỹ hoạt động!"}
@@ -430,7 +430,7 @@ export function GroupFundSection({
                             </Button>
                           )}
 
-                          {/* Huỷ hoặc xoá nếu còn pending */}
+                          {/* Hủy hoặc xóa nếu còn pending */}
                           {isPending && (isOwner || isContributor) && (
                             <Button
                               size="icon"
@@ -438,7 +438,7 @@ export function GroupFundSection({
                               disabled={loadingId === c.id}
                               onClick={() => handleDeleteContribution(c.id)}
                               className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                              title="Xoá yêu cầu"
+                              title="Xóa yêu cầu"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -462,15 +462,15 @@ export function GroupFundSection({
                   <Receipt className="h-6 w-6" />
                 </div>
                 <div className="space-y-1">
-                  <p className="font-semibold text-sm">Chưa có hoá đơn nào chi từ Quỹ nhóm</p>
+                  <p className="font-semibold text-sm">Chưa có hóa đơn nào chi từ Quỹ nhóm</p>
                   <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                    Khi tạo hoá đơn mới, bạn có thể chọn nguồn tiền là "Chi từ Quỹ nhóm" để trích tiền từ quỹ chung thay vì chia tiền nợ cho các thành viên.
+                    Khi tạo hóa đơn mới, bạn có thể chọn nguồn tiền là "Chi từ Quỹ nhóm" để trích tiền từ quỹ chung thay vì chia tiền nợ cho các thành viên.
                   </p>
                 </div>
                 <Button asChild size="sm" className="font-bold">
                   <Link href={`/groups/${groupId}/expenses/new`}>
                     <Plus className="h-4 w-4 mr-1" />
-                    Tạo hoá đơn chi từ quỹ
+                    Tạo hóa đơn chi từ quỹ
                   </Link>
                 </Button>
               </CardContent>

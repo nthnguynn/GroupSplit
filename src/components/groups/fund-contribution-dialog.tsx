@@ -232,7 +232,7 @@ export function FundContributionDialog({
                 className="flex-1"
                 disabled={loading}
               >
-                Huỷ
+                Hủy
               </Button>
               <Button
                 type="submit"

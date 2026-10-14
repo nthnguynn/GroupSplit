@@ -46,7 +46,7 @@ const userBrief = { select: { id: true, displayName: true, avatar: true } } as c
 
 const EXPENSES_PER_PAGE = 10;
 
-// Trường hoá đơn mà danh sách hoá đơn / quỹ nhóm hiển thị.
+// Trường hóa đơn mà danh sách hóa đơn / quỹ nhóm hiển thị.
 // Không join User cho từng split/paidBy: Prisma gửi mỗi split một id trong `IN (...)` (không gộp trùng),
 // trong khi tên đã có sẵn trong danh sách thành viên → gắn tên ở withMemberNames().
 const expenseListSelect = {
@@ -98,7 +98,7 @@ function parseDateParam(value: string | string[] | undefined) {
 }
 
 // Chỉ lấy đúng các trường client component dùng — dữ liệu này được serialize xuống trình duyệt.
-// Hoá đơn KHÔNG tải ở đây: trang chỉ lấy phần cần hiển thị, số dư tính bằng SQL.
+// Hóa đơn KHÔNG tải ở đây: trang chỉ lấy phần cần hiển thị, số dư tính bằng SQL.
 async function getGroupDetail(id: string) {
   // Client chỉ cần biết thành viên nào đã bật SePay (để tự xác nhận chuyển khoản),
   // nên chỉ lấy id — không tải giá trị secret.
@@ -174,7 +174,7 @@ export default async function GroupDetailPage({
   const [{ id }, query, session] = await Promise.all([params, searchParams, auth()]);
   const userId = session!.user.id!;
 
-  // Bộ lọc ngày (mốc ISO do client gửi theo giờ địa phương) và trang của danh sách hoá đơn
+  // Bộ lọc ngày (mốc ISO do client gửi theo giờ địa phương) và trang của danh sách hóa đơn
   const dateFrom = parseDateParam(query.from);
   const dateTo = parseDateParam(query.to);
   const requestedPage = Math.max(1, Number.parseInt(query.page ?? "1", 10) || 1);
@@ -205,7 +205,7 @@ export default async function GroupDetailPage({
   ] = await Promise.all([
     getGroupDetail(id),
     getGroupNetBalances(id),
-    // Huy hiệu trên tab đếm mọi hoá đơn chờ duyệt; danh sách chỉ lấy phần khớp bộ lọc ngày
+    // Huy hiệu trên tab đếm mọi hóa đơn chờ duyệt; danh sách chỉ lấy phần khớp bộ lọc ngày
     prisma.expense.count({ where: { groupId: id, status: "PENDING" } }),
     prisma.expense.findMany({
       where: { groupId: id, status: "PENDING", ...dateWhere },
@@ -485,7 +485,7 @@ export default async function GroupDetailPage({
                       {/* Nút hành động quét QR cá nhân */}
                       <MemberQRAction member={member as any} />
 
-                      {/* Nút xoá thành viên (chỉ Trưởng nhóm có quyền xoá các thành viên khác) */}
+                      {/* Nút xóa thành viên (chỉ Trưởng nhóm có quyền xóa các thành viên khác) */}
                       {isOwner && !isMemberOwner && (
                         <RemoveMemberButton
                           groupId={id}
@@ -542,7 +542,7 @@ export default async function GroupDetailPage({
             </Card>
           )}
 
-          {/* Thẻ Giải tán / Xoá nhóm (cho Trưởng nhóm) hoặc Rời nhóm (cho thành viên) */}
+          {/* Thẻ Giải tán / Xóa nhóm (cho Trưởng nhóm) hoặc Rời nhóm (cho thành viên) */}
           {isOwner ? (
             <DeleteGroupCard groupId={id} groupName={group.name} />
           ) : (
