@@ -1,26 +1,53 @@
-version: '3.8'
-
 services:
+  # PostgreSQL riêng cho GroupSplit — chỉ nằm trong network nội bộ, không mở ra ngoài
+  groupsplit-db:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      - POSTGRES_USER=groupsplit
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Thiếu POSTGRES_PASSWORD trong .env}
+      - POSTGRES_DB=groupsplit
+    volumes:
+      - pgdata:/var/lib/postgresql/data                   # Dữ liệu DB nằm trong Docker volume, còn nguyên khi rebuild app
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U groupsplit -d groupsplit"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - internal
+
   app:
     build: .
     restart: always
+    depends_on:
+      groupsplit-db:
+        condition: service_healthy                        # Chờ DB sẵn sàng rồi mới chạy migration
     environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - DATABASE_URL=postgresql://groupsplit:${POSTGRES_PASSWORD}@groupsplit-db:5432/groupsplit?schema=public
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:?Thiếu NEXTAUTH_SECRET trong .env}
       - NEXTAUTH_URL=${NEXTAUTH_URL}
       - AUTH_TRUST_HOST=true
-      - ZALO_BOT_TOKEN=${ZALO_BOT_TOKEN}
-      - ZALO_BOT_SECRET_TOKEN=${ZALO_BOT_SECRET_TOKEN}
+      - ZALO_BOT_TOKEN=${ZALO_BOT_TOKEN:-}
+      - ZALO_BOT_SECRET_TOKEN=${ZALO_BOT_SECRET_TOKEN:-}
       - WEB_CONCURRENCY=${WEB_CONCURRENCY:-}              # Số worker (trống = số nhân CPU, tối đa 16) — xem server.mjs
-      - DB_CONNECTION_BUDGET=${DB_CONNECTION_BUDGET:-}    # Tổng kết nối DB cho mọi worker (trống = 80); giảm nếu Postgres dùng chung
+      - DB_CONNECTION_BUDGET=${DB_CONNECTION_BUDGET:-}    # Tổng kết nối DB cho mọi worker (trống = 80, dưới max_connections 100)
       - TRUSTED_PROXY_COUNT=${TRUSTED_PROXY_COUNT:-}      # Số reverse proxy trước app (trống = 1); 2 nếu có Cloudflare → NPM
     volumes:
       - ./uploads:/app/public/uploads                     # Bind mount lưu trữ ảnh avatar thực tế của người dùng
     networks:
+      - internal                                          # Nói chuyện với groupsplit-db
       - proxy-net                                         # Network chung kết nối với Proxy (Nginx Proxy Manager, Traefik...)
-    # Không expose port ra ngoài máy host (bảo mật tối đa, traffic đi hoàn toàn qua proxy network)
+    # Không expose port ra ngoài máy host (bảo mật tối đa, traffic đi hoàn toàn qua proxy network).
+    # Chưa có Nginx Proxy Manager thì bỏ comment 2 dòng dưới để truy cập thẳng http://<ip-server>:3000
+    # ports:
+    #   - "3000:3000"
+
+volumes:
+  pgdata:
 
 networks:
+  internal:
   proxy-net:
     external: true
     name: proxy                                           # Hãy đổi thành tên network proxy thật trên Portainer của bạn (ví dụ: proxy, nginx-pm...)
