@@ -19,6 +19,7 @@ import { DashboardFilters } from "@/components/dashboard/dashboard-filters";
 import { SpendingDonutChart } from "@/components/dashboard/spending-donut-chart";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { startOfMonth, endOfMonth, format, addDays, addMonths } from "date-fns";
+import type { Prisma } from "@prisma/client";
 
 export const metadata = {
   title: "Quản lý Chi tiêu Cá nhân - GroupSplit",
@@ -27,6 +28,26 @@ export const metadata = {
 // Nhãn trục thời gian của biểu đồ — tạo formatter một lần thay vì toLocaleDateString mỗi lần lặp
 const monthKeyFormat = new Intl.DateTimeFormat("vi-VN", { month: "2-digit", year: "numeric" });
 const dayKeyFormat = new Intl.DateTimeFormat("vi-VN", { day: "2-digit", month: "2-digit" });
+const RECENT_EXPENSES_LIMIT = 20;
+
+const dashboardExpenseSelect = {
+  id: true,
+  title: true,
+  amount: true,
+  date: true,
+  category: true,
+  categoryId: true,
+  groupId: true,
+  paidById: true,
+  group: { select: { name: true } },
+  categoryRel: { select: { name: true, icon: true } },
+  paidBy: { select: { displayName: true } },
+  splits: {
+    select: { amount: true },
+  },
+} satisfies Prisma.ExpenseSelect;
+
+type DashboardExpense = Prisma.ExpenseGetPayload<{ select: typeof dashboardExpenseSelect }>;
 
 interface SearchParams {
   from?: string;
@@ -69,8 +90,14 @@ export default async function DashboardPage({
   const formattedFrom = format(startDate, "yyyy-MM-dd");
   const formattedTo = format(endDate, "yyyy-MM-dd");
 
+  // Độc lập với danh sách chi tiêu: khởi chạy sớm để không tạo waterfall DB.
+  const groupBalancesPromise = getUserGroupBalances(userId).catch((err) => {
+    console.error("[Dashboard] Lỗi tính số dư theo nhóm:", err);
+    return [] as UserGroupBalance[];
+  });
+
   // Truy vấn danh sách hóa đơn trong khoảng thời gian đã được duyệt (APPROVED) và người dùng có phần chia (split)
-  let expenses: any[] = [];
+  let expenses: DashboardExpense[] = [];
   try {
     expenses = await prisma.expense.findMany({
       where: {
@@ -86,20 +113,10 @@ export default async function DashboardPage({
         },
       },
       select: {
-        id: true,
-        title: true,
-        amount: true,
-        date: true,
-        category: true,
-        categoryId: true,
-        groupId: true,
-        paidById: true,
-        group: { select: { name: true } },
-        categoryRel: { select: { name: true, icon: true } },
-        paidBy: { select: { displayName: true } },
+        ...dashboardExpenseSelect,
         splits: {
           where: { userId },
-          select: { amount: true },
+          select: dashboardExpenseSelect.splits.select,
         },
       },
       orderBy: {
@@ -118,6 +135,9 @@ export default async function DashboardPage({
   }, 0);
 
   const transactionCount = expenses.length;
+  // Dashboard chỉ cần bản xem nhanh. Số liệu và biểu đồ vẫn dùng toàn bộ giao dịch;
+  // lịch sử đầy đủ có ở từng trang nhóm.
+  const recentExpenses = expenses.slice(0, RECENT_EXPENSES_LIMIT);
 
   const daysDiff = Math.max(
     1,
@@ -220,12 +240,7 @@ export default async function DashboardPage({
   }));
 
   // 5. Tính số tiền đang nợ hoặc cần được thanh toán theo nhóm (Lũy kế toàn thời gian)
-  let groupBalances: UserGroupBalance[] = [];
-  try {
-    groupBalances = await getUserGroupBalances(userId);
-  } catch (err) {
-    console.error("[Dashboard] Lỗi tính số dư theo nhóm:", err);
-  }
+  const groupBalances = await groupBalancesPromise;
 
   return (
     <div className="space-y-6">
@@ -354,7 +369,9 @@ export default async function DashboardPage({
               Lịch sử chi tiêu chi tiết
             </CardTitle>
             <Badge variant="outline" className="text-xs font-normal">
-              {expenses.length} giao dịch
+              {recentExpenses.length === transactionCount
+                ? `${transactionCount} giao dịch`
+                : `${recentExpenses.length}/${transactionCount} gần nhất`}
             </Badge>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -365,7 +382,7 @@ export default async function DashboardPage({
               </div>
             ) : (
               <div className="max-h-[350px] overflow-y-auto pr-1 space-y-3 scrollbar-thin">
-                {expenses.map((exp) => {
+                {recentExpenses.map((exp) => {
                   const myShare = exp.splits[0]?.amount ?? 0;
                   const catIcon = exp.categoryRel?.icon ?? "📦";
                   const catName = exp.categoryRel?.name ?? exp.category ?? "Khác";

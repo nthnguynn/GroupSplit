@@ -11,10 +11,13 @@
     "lint": "eslint",
     "seed:users": "bun run scripts/create-users.ts",
     "bench:seed": "bun run scripts/bench/seed.ts",
-    "bench:server": "next start -p 3005",
+    "bench:server": "PORT=3005 node server.mjs",
+    "bench:server:single": "next start -p 3005",
     "bench:server:cluster": "PORT=3005 node server.mjs",
     "bench": "node scripts/bench/load-test.mjs",
-    "bench:cpu": "node scripts/bench/cpu-capacity.mjs"
+    "bench:cpu": "node scripts/bench/cpu-capacity.mjs",
+    "bench:users": "node scripts/bench/users-test.mjs",
+    "bench:scenarios": "node scripts/bench/scenario-test.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.2",

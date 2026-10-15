@@ -4,7 +4,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { memberUserSelect } from "@/lib/user-select";
 import { notFound, redirect } from "next/navigation";
-import { formatVND, formatDate, getInitials, generateInviteUrl } from "@/lib/utils/format";
+import { formatVND, getInitials, generateInviteUrl } from "@/lib/utils/format";
 import { summarizeBalances } from "@/lib/debt-calculator";
 import { getGroupNetBalances } from "@/lib/group-balances";
 import type { Prisma } from "@prisma/client";
@@ -13,22 +13,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Link from "next/link";
 import {
   Plus,
   Crown,
-  Receipt,
   Users,
-  CheckCircle2,
-  Clock,
   Settings,
-  Coins,
-  Wallet,
 } from "lucide-react";
 import { InviteSection } from "@/components/groups/invite-section";
 import { AddMemberForm } from "@/components/groups/add-member-form";
-import { ExpenseApproveButton } from "@/components/groups/expense-approve-button";
 import { SettlementSection } from "@/components/groups/settlement-section";
 import { ExpensesList } from "@/components/groups/expenses-list";
 import { GroupBalanceSummary } from "@/components/groups/group-balance-summary";
@@ -41,6 +34,7 @@ import { GroupSettingsForm } from "@/components/groups/group-settings-form";
 import { LeaveGroupCard } from "@/components/groups/leave-group-card";
 import { RemoveMemberButton } from "@/components/groups/remove-member-button";
 import { DeleteGroupCard } from "@/components/groups/delete-group-card";
+import { GroupSectionNav, parseGroupSection } from "@/components/groups/group-section-nav";
 
 const userBrief = { select: { id: true, displayName: true, avatar: true } } as const;
 
@@ -169,7 +163,7 @@ export default async function GroupDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ page?: string; from?: string; to?: string }>;
+  searchParams: Promise<{ page?: string; from?: string; to?: string; tab?: string }>;
 }) {
   const [{ id }, query, session] = await Promise.all([params, searchParams, auth()]);
   const userId = session!.user.id!;
@@ -178,6 +172,7 @@ export default async function GroupDetailPage({
   const dateFrom = parseDateParam(query.from);
   const dateTo = parseDateParam(query.to);
   const requestedPage = Math.max(1, Number.parseInt(query.page ?? "1", 10) || 1);
+  const activeSection = parseGroupSection(query.tab);
   const dateWhere: Prisma.ExpenseWhereInput =
     dateFrom || dateTo ? { date: { gte: dateFrom, lte: dateTo } } : {};
   const processedWhere: Prisma.ExpenseWhereInput = {
@@ -312,44 +307,17 @@ export default async function GroupDetailPage({
         fundAllocations={group.fundAllocations as any}
       />
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="expenses" className="space-y-4">
-        <div className="overflow-x-auto -mx-2 px-2 sm:mx-0 sm:px-0 scrollbar-none pb-1">
-          <TabsList className="grid grid-cols-6 w-full min-w-[560px] sm:min-w-0 lg:w-[720px] h-9 p-1">
-            <TabsTrigger value="expenses" className="gap-1.5 text-xs sm:text-sm">
-              <Receipt className="h-4 w-4" />
-              Hóa đơn
-              {pendingCount > 0 && (
-                <Badge variant="destructive" className="ml-1 px-1.5 py-0 text-[10px]">
-                  {pendingCount}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="settle" className="gap-1.5 text-xs sm:text-sm">
-              <CheckCircle2 className="h-4 w-4" />
-              Trả nợ
-            </TabsTrigger>
-            <TabsTrigger value="group-fund" className="gap-1.5 text-xs sm:text-sm">
-              <Wallet className="h-4 w-4" />
-              Quỹ nhóm
-            </TabsTrigger>
-            <TabsTrigger value="funds" className="gap-1.5 text-xs sm:text-sm">
-              <Coins className="h-4 w-4" />
-              Cấp quỹ
-            </TabsTrigger>
-            <TabsTrigger value="members" className="gap-1.5 text-xs sm:text-sm">
-              <Users className="h-4 w-4" />
-              Thành viên
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="gap-1.5 text-xs sm:text-sm">
-              <Settings className="h-4 w-4" />
-              Cài đặt
-            </TabsTrigger>
-          </TabsList>
-        </div>
+      {/* Chỉ render section đang mở để không serialize dữ liệu của cả 6 tab. */}
+      <div className="space-y-4">
+        <GroupSectionNav
+          groupId={id}
+          activeSection={activeSection}
+          pendingCount={pendingCount}
+          searchParams={query}
+        />
 
         {/* Tab 1: Expenses List */}
-        <TabsContent value="expenses" className="space-y-4">
+        {activeSection === "expenses" && <div className="space-y-4">
           <ExpensesList
             groupId={id}
             expenses={[...pendingInRange, ...processedExpenses] as any}
@@ -363,10 +331,10 @@ export default async function GroupDetailPage({
             currentUserName={session!.user.name || ""}
             isOwner={isOwner}
           />
-        </TabsContent>
+        </div>}
 
         {/* Tab 2: Settlement Section */}
-        <TabsContent value="settle" className="space-y-4">
+        {activeSection === "settle" && <div className="space-y-4">
           <SettlementSection
             groupId={id}
             debts={debts}
@@ -383,10 +351,10 @@ export default async function GroupDetailPage({
             fundManagerId={group.fundManagerId}
             fundAllocations={group.fundAllocations as any}
           />
-        </TabsContent>
+        </div>}
 
         {/* Tab 3: Group Fund Section */}
-        <TabsContent value="group-fund" className="space-y-4">
+        {activeSection === "group-fund" && <div className="space-y-4">
           <GroupFundSection
             groupId={id}
             groupName={group.name}
@@ -403,10 +371,10 @@ export default async function GroupDetailPage({
             expenses={fundExpenses as any}
             members={group.members.filter((m) => !m.isLeft) as any}
           />
-        </TabsContent>
+        </div>}
 
         {/* Tab 4: Fund Allocations Section */}
-        <TabsContent value="funds" className="space-y-4">
+        {activeSection === "funds" && <div className="space-y-4">
           <FundAllocationsSection
             groupId={id}
             fundAllocations={group.fundAllocations as any}
@@ -414,10 +382,10 @@ export default async function GroupDetailPage({
             currentUserId={userId}
             isFundManager={isFundManager}
           />
-        </TabsContent>
+        </div>}
 
         {/* Tab 3: Members Section */}
-        <TabsContent value="members" className="space-y-4">
+        {activeSection === "members" && <div className="space-y-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-3">
               <CardTitle className="text-base font-bold flex items-center gap-2">
@@ -506,10 +474,10 @@ export default async function GroupDetailPage({
             <InviteSection inviteUrl={inviteUrl} inviteCode={group.inviteCode} />
             <AddMemberForm groupId={id} />
           </div>
-        </TabsContent>
+        </div>}
 
         {/* Tab 4: Settings Section */}
-        <TabsContent value="settings" className="space-y-4">
+        {activeSection === "settings" && <div className="space-y-4">
           {/* Cấu hình Quản lý quỹ */}
           {isOwner && (
             <FundManagerSettings
@@ -548,8 +516,8 @@ export default async function GroupDetailPage({
           ) : (
             <LeaveGroupCard groupId={id} groupName={group.name} />
           )}
-        </TabsContent>
-      </Tabs>
+        </div>}
+      </div>
     </div>
   );
 }

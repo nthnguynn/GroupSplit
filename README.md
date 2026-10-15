@@ -1,5 +1,9 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Performance
+
+Xem [báo cáo tối ưu và cách kiểm thử 1.200 người dùng đồng thời](docs/bao-cao-hieu-nang-1200-nguoi-dung.md).
+
 ## Getting Started
 
 First, run the development server:

@@ -4,6 +4,9 @@
  *
  * Chạy:  bun run bench:seed
  * Tùy chỉnh: BENCH_MEMBERS=20 BENCH_EXPENSES=5000 bun run bench:seed
+ *   BENCH_DAYS=90          rải hóa đơn đều trong 90 ngày (mặc định: mỗi giờ 1 hóa đơn)
+ *   BENCH_PENDING_EVERY=100 cứ 100 hóa đơn có 1 chờ duyệt (mặc định 10)
+ * Bộ dữ liệu sát thực tế: BENCH_EXPENSES=300 BENCH_DAYS=90 BENCH_PENDING_EVERY=100 bun run bench:seed
  * Chạy lại sẽ xóa nhóm [BENCH] cũ và tạo mới.
  */
 import { PrismaClient } from "@prisma/client";
@@ -22,6 +25,9 @@ const prisma = new PrismaClient({ adapter: new PrismaPg(pool) });
 
 const MEMBERS = Math.max(2, Number(process.env.BENCH_MEMBERS ?? 10));
 const EXPENSES = Math.max(1, Number(process.env.BENCH_EXPENSES ?? 1000));
+const DAYS = Number(process.env.BENCH_DAYS ?? 0);
+const PENDING_EVERY = Math.max(1, Number(process.env.BENCH_PENDING_EVERY ?? 10));
+const STEP_MS = DAYS > 0 ? (DAYS * 24 * 60 * 60 * 1000) / EXPENSES : 60 * 60 * 1000;
 const SETTLEMENTS = 30;
 const NOTIFICATIONS = 60;
 const PASSWORD = "bench123456";
@@ -96,14 +102,14 @@ async function main() {
   const now = Date.now();
   const expenseData = Array.from({ length: EXPENSES }, (_, i) => {
     const payer = users[i % MEMBERS];
-    const date = new Date(now - i * 60 * 60 * 1000);
+    const date = new Date(now - i * STEP_MS);
     return {
       title: `Chi tiêu #${i + 1}`,
       amount: (Math.floor(Math.random() * 1950) + 50) * 1000,
       groupId: group.id,
       paidById: payer.id,
       createdById: payer.id,
-      status: i % 10 === 0 ? ("PENDING" as const) : ("APPROVED" as const),
+      status: i % PENDING_EVERY === 0 ? ("PENDING" as const) : ("APPROVED" as const),
       category: CATEGORIES[i % CATEGORIES.length],
       date,
       createdAt: date,

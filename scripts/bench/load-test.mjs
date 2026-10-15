@@ -4,8 +4,8 @@
  *
  * Chuẩn bị:
  *   1. bun run bench:seed                        (tạo user bench_owner + nhóm [BENCH])
- *   2. bun run build && bun run bench:server        (1 tiến trình, đo trên bản production — KHÔNG dùng next dev)
- *      hoặc bun run bench:server:cluster              (nhiều tiến trình, mỗi nhân CPU một worker)
+ *   2. bun run build && bun run bench:server          (cluster giống Portainer — KHÔNG dùng next dev)
+ *      hoặc bun run bench:server:single               (1 tiến trình để lấy baseline 1 CPU)
  * Chạy:
  *   bun run bench
  *

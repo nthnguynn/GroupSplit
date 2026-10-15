@@ -47,3 +47,7 @@ next-env.d.ts
 
 # database SQLite cũ / dữ liệu local — không đưa lên git
 *.db
+
+# file tạm / báo cáo render local
+/tmp/
+/output/
