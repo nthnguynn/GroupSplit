@@ -34,11 +34,20 @@ export async function POST(
 
   const { action } = await req.json(); // "APPROVE" | "REJECT"
 
+  if (action !== "APPROVE" && action !== "REJECT") {
+    return NextResponse.json({ error: "Hành động không hợp lệ" }, { status: 400 });
+  }
+
+  // Kiểm tra PENDING ở trên chưa đủ khi 2 request đến cùng lúc: chỉ request chuyển được trạng thái mới xử lý tiếp
+  const { count } = await prisma.groupJoinRequest.updateMany({
+    where: { id: requestId, status: "PENDING" },
+    data: { status: action === "APPROVE" ? "APPROVED" : "REJECTED" },
+  });
+  if (count === 0) {
+    return NextResponse.json({ error: "Yêu cầu này đã được xử lý" }, { status: 400 });
+  }
+
   if (action === "APPROVE") {
-    await prisma.groupJoinRequest.update({
-      where: { id: requestId },
-      data: { status: "APPROVED" },
-    });
 
     const existingMember = await prisma.groupMember.findUnique({
       where: { userId_groupId: { userId: joinRequest.userId, groupId: joinRequest.groupId } },
@@ -74,12 +83,7 @@ export async function POST(
     });
 
     return NextResponse.json({ message: `Đã duyệt ${joinRequest.user.displayName} vào nhóm` });
-  } else if (action === "REJECT") {
-    await prisma.groupJoinRequest.update({
-      where: { id: requestId },
-      data: { status: "REJECTED" },
-    });
-
+  } else {
     // Notify User
     await createNotification({
       userId: joinRequest.userId,
@@ -92,6 +96,4 @@ export async function POST(
 
     return NextResponse.json({ message: "Đã từ chối yêu cầu tham gia" });
   }
-
-  return NextResponse.json({ error: "Hành động không hợp lệ" }, { status: 400 });
 }

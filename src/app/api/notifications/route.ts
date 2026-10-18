@@ -9,6 +9,20 @@ export async function GET(req: NextRequest) {
 
   const userId = session.user.id!;
 
+  // ?summary=1: chuông thông báo hỏi định kỳ — chỉ số chưa đọc và id thông báo mới nhất,
+  // client tự tải danh sách đầy đủ khi một trong hai thay đổi
+  if (req.nextUrl.searchParams.get("summary") === "1") {
+    const [latest, unreadCount] = await Promise.all([
+      prisma.notification.findFirst({
+        where: { userId },
+        orderBy: { createdAt: "desc" },
+        select: { id: true },
+      }),
+      prisma.notification.count({ where: { userId, status: "UNREAD" } }),
+    ]);
+    return NextResponse.json({ latestId: latest?.id ?? null, unreadCount });
+  }
+
   const [rawNotifications, unreadCount] = await Promise.all([
     prisma.notification.findMany({
       where: { userId },

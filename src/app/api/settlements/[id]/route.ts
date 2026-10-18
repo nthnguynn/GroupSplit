@@ -68,9 +68,15 @@ export async function PATCH(
       );
     }
 
-    const updated = await prisma.settlement.update({
-      where: { id },
+    // Rời trạng thái nháp [QR_PENDING] bằng cập nhật có điều kiện: chỉ một request được gửi thông báo
+    const leavingQrPending =
+      settlement.note?.startsWith("[QR_PENDING]") && !note?.startsWith("[QR_PENDING]");
+    const { count } = await prisma.settlement.updateMany({
+      where: leavingQrPending ? { id, note: { startsWith: "[QR_PENDING]" } } : { id },
       data: { note },
+    });
+    const updated = await prisma.settlement.findUniqueOrThrow({
+      where: { id },
       include: {
         fromUser: { select: { displayName: true } },
         toUser: { select: { displayName: true } },
@@ -78,7 +84,7 @@ export async function PATCH(
     });
 
     // Nếu chuyển từ trạng thái nháp [QR_PENDING] sang xác nhận đã chuyển xong thủ công
-    if (settlement.note?.startsWith("[QR_PENDING]") && !note?.startsWith("[QR_PENDING]")) {
+    if (leavingQrPending && count === 1) {
       await createNotification({
         userId: settlement.toUserId,
         title: `Yêu cầu xác nhận nhận tiền`,

@@ -17,6 +17,8 @@
  *   THINK_MIN, THINK_MAX  thời gian nghỉ giữa 2 lần mở trang (giây), mặc định 5 và 15
  *   MAX_P99, MAX_ERR      ngưỡng đạt, mặc định 1000 ms và 1 %
  *   BENCH_ACCOUNTS        "user:mật khẩu,..." — mặc định 10 tài khoản do bench:seed tạo
+ *   BELL_EVERY, BELL_PATH mô phỏng chuông thông báo chạy nền trong trình duyệt: mỗi người gọi BELL_PATH
+ *                         sau mỗi BELL_EVERY giây, song song với việc mở trang (mặc định tắt)
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -32,6 +34,8 @@ const THINK_MIN = Number(process.env.THINK_MIN ?? 5);
 const THINK_MAX = Number(process.env.THINK_MAX ?? 15);
 const MAX_P99 = Number(process.env.MAX_P99 ?? 1000);
 const MAX_ERR = Number(process.env.MAX_ERR ?? 1);
+const BELL_EVERY = Number(process.env.BELL_EVERY ?? 0);
+const BELL_PATH = process.env.BELL_PATH ?? "/api/notifications";
 const ACCOUNTS = (
   process.env.BENCH_ACCOUNTS ??
   ["bench_owner", ...Array.from({ length: 9 }, (_, i) => `bench_user_${i + 1}`)].map((u) => `${u}:bench123456`).join(",")
@@ -96,35 +100,49 @@ async function login({ username, password }) {
 let stats = null; // số liệu của bậc đang đo; null = đang chờ người dùng vào nhịp
 let running = true;
 
+async function measuredFetch(session, name, path) {
+  // Giữ đúng bucket tại lúc request bắt đầu. Nếu đọc biến `stats` lúc request
+  // kết thúc, request chậm có thể bị rơi khỏi bậc hiện tại hoặc lọt sang bậc kế.
+  const sample = stats;
+  if (sample) sample.inFlight++;
+  const t0 = performance.now();
+  let ok = false;
+  try {
+    const res = await fetch(BASE_URL + path, {
+      headers: { cookie: session.cookie },
+      redirect: "manual",
+      signal: AbortSignal.timeout(30_000),
+    });
+    await res.arrayBuffer();
+    ok = res.status === 200;
+  } catch {
+    ok = false;
+  }
+  const ms = performance.now() - t0;
+  if (sample) {
+    sample.latencies.push(ms);
+    if (!ok) sample.errors++;
+    (sample.byAction[name] ??= []).push(ms);
+    sample.inFlight--;
+  }
+}
+
 async function virtualUser(session, startDelayMs) {
   await sleep(startDelayMs);
+  if (BELL_EVERY > 0) bellLoop(session);
   while (running) {
     const action = pickAction();
-    // Giữ đúng bucket tại lúc request bắt đầu. Nếu đọc biến `stats` lúc request
-    // kết thúc, request chậm có thể bị rơi khỏi bậc hiện tại hoặc lọt sang bậc kế.
-    const sample = stats;
-    if (sample) sample.inFlight++;
-    const t0 = performance.now();
-    let ok = false;
-    try {
-      const res = await fetch(BASE_URL + action.path(session), {
-        headers: { cookie: session.cookie },
-        redirect: "manual",
-        signal: AbortSignal.timeout(30_000),
-      });
-      await res.arrayBuffer();
-      ok = res.status === 200;
-    } catch {
-      ok = false;
-    }
-    const ms = performance.now() - t0;
-    if (sample) {
-      sample.latencies.push(ms);
-      if (!ok) sample.errors++;
-      (sample.byAction[action.name] ??= []).push(ms);
-      sample.inFlight--;
-    }
+    await measuredFetch(session, action.name, action.path(session));
     await sleep(thinkMs());
+  }
+}
+
+// Chuông thông báo trong header tự gọi API theo chu kỳ, độc lập với việc người dùng mở trang
+async function bellLoop(session) {
+  await sleep(Math.random() * BELL_EVERY * 1000);
+  while (running) {
+    await measuredFetch(session, "Chuông thông báo (nền)", BELL_PATH);
+    await sleep(BELL_EVERY * 1000);
   }
 }
 
@@ -140,7 +158,8 @@ const ms = (v) => `${Math.round(v)}ms`;
 
 async function main() {
   console.log(`🎯 ${BASE_URL} — bậc [${STAGES.join(", ")}] người, đo ${HOLD}s/bậc`);
-  console.log(`   Mỗi người nghỉ ${THINK_MIN}–${THINK_MAX}s giữa 2 lần mở trang · đạt: p99 ≤ ${MAX_P99}ms và lỗi ≤ ${MAX_ERR}%\n`);
+  console.log(`   Mỗi người nghỉ ${THINK_MIN}–${THINK_MAX}s giữa 2 lần mở trang · đạt: p99 ≤ ${MAX_P99}ms và lỗi ≤ ${MAX_ERR}%`);
+  console.log(BELL_EVERY > 0 ? `   Chuông thông báo nền: ${BELL_PATH} mỗi ${BELL_EVERY}s\n` : "");
 
   const sessions = [];
   for (const account of ACCOUNTS) sessions.push(await login(account));
@@ -208,7 +227,14 @@ async function main() {
   const outDir = join(dirname(fileURLToPath(import.meta.url)), "results");
   mkdirSync(outDir, { recursive: true });
   const outFile = join(outDir, `users-${new Date().toISOString().replace(/[:.]/g, "-")}.json`);
-  writeFileSync(outFile, JSON.stringify({ baseUrl: BASE_URL, thinkSeconds: [THINK_MIN, THINK_MAX], hold: HOLD, results }, null, 2));
+  writeFileSync(
+    outFile,
+    JSON.stringify(
+      { baseUrl: BASE_URL, thinkSeconds: [THINK_MIN, THINK_MAX], hold: HOLD, bell: BELL_EVERY > 0 ? { path: BELL_PATH, every: BELL_EVERY } : null, results },
+      null,
+      2
+    )
+  );
   console.log(`\n💾 Kết quả chi tiết: ${outFile}`);
   process.exit(0);
 }

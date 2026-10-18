@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "./auth.config";
 import { verifyPassword } from "@/lib/password";
 import { verifyLoginTicket } from "@/lib/login-ticket";
+import { getClientIp } from "@/lib/client-ip";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
@@ -15,7 +16,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Vé từ /api/auth/login-check (đã kiểm tra captcha + mật khẩu) → khỏi chạy bcrypt lần 2
         ticket: { type: "hidden" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const { prisma } = await import("@/lib/prisma");
 
         let user;
@@ -26,6 +27,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           if (!user) return null;
         } else {
           if (!credentials?.username || !credentials?.password) return null;
+          // Form đăng nhập luôn đi qua login-check (captcha + giới hạn 15 lần/phút) rồi dùng vé.
+          // Gửi thẳng mật khẩu tới đây cũng phải chịu cùng ngưỡng, nếu không sẽ dò được mật khẩu không giới hạn.
+          const { rateLimit } = await import("@/lib/rate-limit");
+          const ip = request?.headers ? getClientIp(request.headers) : "unknown";
+          if (!(await rateLimit(`login-password:${ip}`, 15, 60 * 1000)).success) return null;
           user = await prisma.user.findUnique({
             where: { username: (credentials.username as string).trim() },
           });

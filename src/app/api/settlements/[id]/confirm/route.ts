@@ -23,19 +23,25 @@ export async function PATCH(
   if (settlement.toUserId !== userId)
     return NextResponse.json({ error: "Chỉ người nhận mới xác nhận được" }, { status: 403 });
 
-  const updated = await prisma.settlement.update({
-    where: { id },
+  // Chỉ request chuyển được isConfirmed false → true mới gửi thông báo (bấm đúp, hoặc trùng lúc
+  // với webhook SePay tự xác nhận, không sinh thông báo trùng)
+  const { count } = await prisma.settlement.updateMany({
+    where: { id, isConfirmed: false },
     data: {
       isConfirmed: true,
       note: settlement.note?.startsWith("[QR_PENDING]")
         ? settlement.note.replace(/^\[QR_PENDING\]\s*/, "")
         : settlement.note,
     },
+  });
+  const updated = await prisma.settlement.findUniqueOrThrow({
+    where: { id },
     include: {
       fromUser: { select: { displayName: true } },
       toUser: { select: { displayName: true } },
     },
   });
+  if (count === 0) return NextResponse.json(updated);
 
   // Send Notification to payer (fromUserId)
   await createNotification({

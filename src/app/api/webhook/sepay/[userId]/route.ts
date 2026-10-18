@@ -84,6 +84,10 @@ export async function POST(
     }
 
     // 6. Xử lý gạch nợ (chỉ tiền vào "in")
+    // Tiền phải vào tài khoản của chính người nhận (chủ webhook này) và đủ số tiền (lệch tối đa 1đ do làm tròn);
+    // nếu không, chuyển 1đ kèm mã GS... cũng gạch được cả khoản nợ.
+    const transferAmount = parseFloat(data.transferAmount);
+    const coversAmount = (amount: number) => Number.isFinite(transferAmount) && transferAmount + 1 >= amount;
     if (data.transferType === "in" && data.content) {
       // Tìm mã định danh GS[settlementId] trong nội dung chuyển khoản
       const match = data.content.match(/GS([a-zA-Z0-9]+)/);
@@ -95,17 +99,28 @@ export async function POST(
           where: { id: settlementId },
         });
 
-        if (settlement && !settlement.isConfirmed) {
-          // Cập nhật Settlement thành đã xác nhận
-          const updatedSettlement = await prisma.settlement.update({
+        // Cập nhật có điều kiện: nếu người nhận vừa bấm xác nhận tay cùng lúc thì chỉ một bên gửi thông báo
+        const confirmed =
+          settlement &&
+          !settlement.isConfirmed &&
+          settlement.toUserId === userId &&
+          coversAmount(settlement.amount) &&
+          (
+            await prisma.settlement.updateMany({
+              where: { id: settlementId, isConfirmed: false },
+              data: {
+                isConfirmed: true,
+                // Xóa tiền tố [QR_PENDING] nếu còn
+                note: settlement.note?.startsWith("[QR_PENDING]")
+                  ? settlement.note.replace(/^\[QR_PENDING\]\s*/, "")
+                  : settlement.note,
+              },
+            })
+          ).count === 1;
+
+        if (settlement && confirmed) {
+          const updatedSettlement = await prisma.settlement.findUniqueOrThrow({
             where: { id: settlementId },
-            data: {
-              isConfirmed: true,
-              // Xóa tiền tố [QR_PENDING] nếu còn
-              note: settlement.note?.startsWith("[QR_PENDING]")
-                ? settlement.note.replace(/^\[QR_PENDING\]\s*/, "")
-                : settlement.note,
-            },
             include: {
               fromUser: { select: { displayName: true } },
               toUser: { select: { displayName: true } },
@@ -129,7 +144,7 @@ ${updatedSettlement.fromUser.displayName} ➔ ${updatedSettlement.toUser.display
 
           console.log(`[SePay Webhook] Đã xác nhận tự động Settlement ID ${settlementId} số tiền ${data.transferAmount}đ.`);
         } else {
-          console.log(`[SePay Webhook] Không khớp Settlement hoặc đã được xác nhận trước: ID ${settlementId}`);
+          console.log(`[SePay Webhook] Không khớp Settlement, sai người nhận, thiếu tiền hoặc đã được xác nhận trước: ID ${settlementId}`);
         }
       }
 
@@ -145,14 +160,23 @@ ${updatedSettlement.fromUser.displayName} ➔ ${updatedSettlement.toUser.display
           },
         });
 
-        if (contribution && contribution.status !== "CONFIRMED") {
-          await prisma.fundContribution.update({
-            where: { id: contributionId },
-            data: {
-              status: "CONFIRMED",
-              confirmedAt: new Date(),
-            },
-          });
+        // Tiền góp quỹ chuyển vào tài khoản trưởng nhóm → chủ webhook phải là trưởng nhóm của khoản góp
+        const confirmed =
+          contribution &&
+          contribution.status !== "CONFIRMED" &&
+          contribution.group.ownerId === userId &&
+          coversAmount(contribution.amount) &&
+          (
+            await prisma.fundContribution.updateMany({
+              where: { id: contributionId, status: { not: "CONFIRMED" } },
+              data: {
+                status: "CONFIRMED",
+                confirmedAt: new Date(),
+              },
+            })
+          ).count === 1;
+
+        if (contribution && confirmed) {
 
           // Phát sóng SSE
           eventEmitter.emit(`group:${contribution.groupId}`, { type: "REFRESH" });

@@ -33,13 +33,20 @@ export async function POST(
 
   const { action } = await req.json(); // "ACCEPT" | "DECLINE"
 
-  if (action === "ACCEPT") {
-    // Update invitation status
-    await prisma.groupInvitation.update({
-      where: { id: invitationId },
-      data: { status: "ACCEPTED" },
-    });
+  if (action !== "ACCEPT" && action !== "DECLINE") {
+    return NextResponse.json({ error: "Hành động không hợp lệ" }, { status: 400 });
+  }
 
+  // Kiểm tra PENDING ở trên chưa đủ khi 2 request đến cùng lúc: chỉ request chuyển được trạng thái mới xử lý tiếp
+  const { count } = await prisma.groupInvitation.updateMany({
+    where: { id: invitationId, status: "PENDING" },
+    data: { status: action === "ACCEPT" ? "ACCEPTED" : "DECLINED" },
+  });
+  if (count === 0) {
+    return NextResponse.json({ error: "Lời mời này đã được xử lý" }, { status: 400 });
+  }
+
+  if (action === "ACCEPT") {
     // Add to group member if not already
     const existingMember = await prisma.groupMember.findUnique({
       where: { userId_groupId: { userId, groupId: invitation.groupId } },
@@ -75,12 +82,7 @@ export async function POST(
     });
 
     return NextResponse.json({ message: `Đã tham gia nhóm ${invitation.group.name}` });
-  } else if (action === "DECLINE") {
-    await prisma.groupInvitation.update({
-      where: { id: invitationId },
-      data: { status: "DECLINED" },
-    });
-
+  } else {
     // Notify inviter
     await createNotification({
       userId: invitation.inviterId,
@@ -93,6 +95,4 @@ export async function POST(
 
     return NextResponse.json({ message: "Đã từ chối lời mời" });
   }
-
-  return NextResponse.json({ error: "Hành động không hợp lệ" }, { status: 400 });
 }

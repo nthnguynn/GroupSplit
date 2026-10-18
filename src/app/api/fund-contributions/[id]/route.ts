@@ -51,13 +51,20 @@ export async function PATCH(
       return NextResponse.json({ error: "Chỉ Trưởng nhóm mới có quyền xác nhận khoản góp quỹ" }, { status: 403 });
     }
 
-    const updated = await prisma.fundContribution.update({
-      where: { id },
+    // Chỉ khoản đang chờ mới được duyệt/từ chối, và chỉ request chuyển được trạng thái mới gửi thông báo
+    // (bấm đúp, hoặc trùng lúc với webhook SePay tự xác nhận)
+    const { count } = await prisma.fundContribution.updateMany({
+      where: { id, status: "PENDING" },
       data: {
         status,
         confirmedAt: status === "CONFIRMED" ? new Date() : null,
       },
     });
+    const updated = await prisma.fundContribution.findUnique({ where: { id } });
+    if (count === 0) {
+      if (updated?.status === status) return NextResponse.json(updated);
+      return NextResponse.json({ error: "Khoản góp quỹ này đã được xử lý trước đó" }, { status: 409 });
+    }
 
     // Realtime SSE
     eventEmitter.emit(`group:${contribution.groupId}`, { type: "REFRESH" });

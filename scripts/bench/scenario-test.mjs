@@ -32,7 +32,7 @@ const MAX_P99 = Number(process.env.MAX_P99 ?? 1000);
 const MAX_ERR = Number(process.env.MAX_ERR ?? 1);
 const REQUEST_TIMEOUT = Number(process.env.REQUEST_TIMEOUT ?? 60_000);
 const ONLY = new Set(
-  (process.env.ONLY ?? "same-page,mixed-read,create-expense,fund-contribution,settlement,mark-read,approve-one")
+  (process.env.ONLY ?? "same-page,mixed-read,create-expense,fund-contribution,settlement,mark-read,approve-one,confirm-one")
     .split(",")
     .map((value) => value.trim())
     .filter(Boolean)
@@ -349,6 +349,44 @@ async function main() {
     console.log(
       `           Tính đúng: ${matchingNotifications === 1 ? "ĐẠT" : "LỖI"} — ` +
         `${matchingNotifications} thông báo trùng trong 30 thông báo mới nhất (mong đợi 1)`
+    );
+  }
+
+  if (ONLY.has("confirm-one")) {
+    // Một thành viên báo đã trả cho trưởng nhóm, rồi trưởng nhóm bấm "Xác nhận" 1.200 lần cùng lúc
+    const payer = memberSessions[0];
+    const setup = await request(payer, `/api/groups/${group.id}/settlements`, {
+      method: "POST",
+      body: JSON.stringify({
+        fromUserId: payer.userId,
+        toUserId: group.ownerId,
+        amount: 54_321,
+        note: `[BENCH-COLLISION] ${Date.now()}`,
+      }),
+    });
+    if (setup.status !== 201) throw new Error(`Không tạo được khoản thanh toán chờ xác nhận: HTTP ${setup.status}`);
+    const settlementId = setup.body.id;
+
+    const result = await synchronizedBurst("Cùng xác nhận MỘT khoản thanh toán", USERS, () =>
+      request(owner, `/api/settlements/${settlementId}/confirm`, { method: "PATCH" })
+    );
+    const notificationResponse = await request(payer, "/api/notifications");
+    const matchingNotifications = Array.isArray(notificationResponse.body?.notifications)
+      ? notificationResponse.body.notifications.filter(
+          (notification) => notification.entityId === settlementId && notification.type === "SETTLEMENT_CONFIRMED"
+        ).length
+      : 0;
+    result.summary.correctness = {
+      expectedNotifications: 1,
+      observedInLatest30: matchingNotifications,
+      pass: matchingNotifications === 1,
+    };
+    result.summary.pass = result.summary.pass && result.summary.correctness.pass;
+    results.push(result.summary);
+    printSummary(result);
+    console.log(
+      `           Tính đúng: ${matchingNotifications === 1 ? "ĐẠT" : "LỖI"} — ` +
+        `${matchingNotifications} thông báo xác nhận trong 30 thông báo mới nhất (mong đợi 1)`
     );
   }
 

@@ -45,8 +45,19 @@ export async function GET(
       // Đăng ký sự kiện lắng nghe của nhóm này
       eventEmitter.on(`group:${groupId}`, listener);
 
+      // Reverse proxy (Nginx Proxy Manager mặc định proxy_read_timeout 60s) cắt kết nối im lặng quá lâu,
+      // trình duyệt lại phải kết nối lại (thêm 1 lượt xác thực + truy vấn). Dòng chú thích SSE giữ kết nối sống.
+      const heartbeat = setInterval(() => {
+        try {
+          controller.enqueue(": ping\n\n");
+        } catch {
+          clearInterval(heartbeat);
+        }
+      }, 25_000);
+
       // Giải phóng tài nguyên khi ngắt kết nối
       req.signal.addEventListener("abort", () => {
+        clearInterval(heartbeat);
         eventEmitter.off(`group:${groupId}`, listener);
       });
     },

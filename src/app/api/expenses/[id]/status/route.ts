@@ -16,6 +16,9 @@ export async function PATCH(
   const { id: expenseId } = await params;
   const userId = session.user.id!;
   const { status } = await req.json();
+  if (status !== "APPROVED" && status !== "REJECTED") {
+    return NextResponse.json({ error: "Trạng thái không hợp lệ" }, { status: 400 });
+  }
 
   const expense = await prisma.expense.findUnique({
     where: { id: expenseId },
@@ -31,10 +34,18 @@ export async function PATCH(
   if (expense.group.ownerId !== userId)
     return NextResponse.json({ error: "Chỉ Trưởng nhóm mới có quyền duyệt hóa đơn" }, { status: 403 });
 
-  const updated = await prisma.expense.update({
-    where: { id: expenseId },
+  // Chuyển trạng thái có điều kiện: chỉ request đưa được hóa đơn ra khỏi PENDING mới gửi thông báo.
+  // Bấm đúp hay nhiều tab cùng bấm duyệt sẽ không sinh thông báo / tin Zalo trùng.
+  const { count } = await prisma.expense.updateMany({
+    where: { id: expenseId, status: "PENDING" },
     data: { status },
   });
+  const updated = await prisma.expense.findUnique({ where: { id: expenseId } });
+  if (count === 0) {
+    // Request khác đã xử lý: cùng quyết định thì trả về như thành công, khác thì báo xung đột
+    if (updated?.status === status) return NextResponse.json(updated);
+    return NextResponse.json({ error: "Hóa đơn này đã được xử lý trước đó" }, { status: 409 });
+  }
 
   // Phát sóng tin nhắn cập nhật cho tất cả client
   eventEmitter.emit(`group:${expense.groupId}`, { type: "REFRESH" });

@@ -7,6 +7,8 @@ services:
       - POSTGRES_USER=groupsplit
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?Thiếu POSTGRES_PASSWORD trong .env}
       - POSTGRES_DB=groupsplit
+    ports:
+      - "127.0.0.1:5434:5432"                             # Chỉ expose cho localhost (npm run dev); production traffic đi qua internal network
     volumes:
       - pgdata:/var/lib/postgresql/data                   # Dữ liệu DB nằm trong Docker volume, còn nguyên khi rebuild app
     healthcheck:

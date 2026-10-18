@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -42,6 +42,9 @@ export function NotificationBell() {
   const [loading, setLoading] = useState(false);
   const [processingId, setProcessingId] = useState<string | null>(null);
 
+  // "<id mới nhất>:<số chưa đọc>" của lần tải gần nhất — đổi thì mới tải lại danh sách
+  const seenRef = useRef<string | null>(null);
+
   const fetchNotifications = useCallback(async () => {
     try {
       const res = await fetch("/api/notifications");
@@ -49,17 +52,36 @@ export function NotificationBell() {
         const data = await res.json();
         setNotifications(data.notifications || []);
         setUnreadCount(data.unreadCount || 0);
+        seenRef.current = `${data.notifications?.[0]?.id ?? null}:${data.unreadCount || 0}`;
       }
     } catch (err) {
       console.error("Fetch notifications error:", err);
     }
   }, []);
 
+  // Mỗi tab đang mở gọi định kỳ, nên chỉ hỏi bản tóm tắt (2 truy vấn nhỏ, vài chục byte)
+  // thay vì 30 thông báo đầy đủ; tab bị ẩn thì không hỏi.
+  const checkForUpdates = useCallback(async () => {
+    if (document.visibilityState !== "visible") return;
+    try {
+      const res = await fetch("/api/notifications?summary=1");
+      if (!res.ok) return;
+      const { latestId, unreadCount } = await res.json();
+      if (`${latestId}:${unreadCount}` !== seenRef.current) await fetchNotifications();
+    } catch (err) {
+      console.error("Check notifications error:", err);
+    }
+  }, [fetchNotifications]);
+
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 12000); // Polling every 12s
-    return () => clearInterval(interval);
-  }, [fetchNotifications]);
+    const interval = setInterval(checkForUpdates, 30000);
+    document.addEventListener("visibilitychange", checkForUpdates);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", checkForUpdates);
+    };
+  }, [fetchNotifications, checkForUpdates]);
 
   async function markAllAsRead() {
     setLoading(true);

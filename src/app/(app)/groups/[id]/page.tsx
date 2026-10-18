@@ -124,13 +124,11 @@ async function getGroupDetail(id: string) {
         include: { fromUser: userBrief, toUser: userBrief },
         orderBy: { createdAt: "desc" },
       },
+      // Thanh toán và cấp quỹ luôn cần cho thanh số dư ở đầu trang (khoản chờ xác nhận, hộp giải thích nợ).
+      // Lịch sử góp quỹ chỉ tab Quỹ nhóm dùng → tải riêng trong trang.
       fundAllocations: {
         include: { fromUser: userBrief, toUser: userBrief },
         orderBy: { date: "desc" },
-      },
-      fundContributions: {
-        include: { user: userBrief },
-        orderBy: { createdAt: "desc" },
       },
     },
   });
@@ -189,6 +187,12 @@ export default async function GroupDetailPage({
       take: EXPENSES_PER_PAGE,
     });
 
+  // Chỉ truy vấn dữ liệu của tab đang mở: danh sách hóa đơn cho tab Hóa đơn, lịch sử quỹ cho tab Quỹ nhóm.
+  // Các tab khác không phải chờ (và không phải chịu chi phí tăng dần theo lịch sử của nhóm).
+  const isExpensesTab = activeSection === "expenses";
+  const isGroupFundTab = activeSection === "group-fund";
+  const noRows = Promise.resolve([] as ExpenseListRow[]);
+
   const [
     group,
     netBalances,
@@ -197,23 +201,35 @@ export default async function GroupDetailPage({
     processedTotal,
     requestedProcessedPage,
     fundExpenseRows,
+    fundContributions,
   ] = await Promise.all([
     getGroupDetail(id),
     getGroupNetBalances(id),
     // Huy hiệu trên tab đếm mọi hóa đơn chờ duyệt; danh sách chỉ lấy phần khớp bộ lọc ngày
     prisma.expense.count({ where: { groupId: id, status: "PENDING" } }),
-    prisma.expense.findMany({
-      where: { groupId: id, status: "PENDING", ...dateWhere },
-      select: expenseListSelect,
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.expense.count({ where: processedWhere }),
-    getProcessedPage(requestedPage),
-    prisma.expense.findMany({
-      where: { groupId: id, status: "APPROVED", fundingSource: "FUND" },
-      select: expenseListSelect,
-      orderBy: { date: "desc" },
-    }),
+    isExpensesTab
+      ? prisma.expense.findMany({
+          where: { groupId: id, status: "PENDING", ...dateWhere },
+          select: expenseListSelect,
+          orderBy: { createdAt: "desc" },
+        })
+      : noRows,
+    isExpensesTab ? prisma.expense.count({ where: processedWhere }) : Promise.resolve(0),
+    isExpensesTab ? getProcessedPage(requestedPage) : noRows,
+    isGroupFundTab
+      ? prisma.expense.findMany({
+          where: { groupId: id, status: "APPROVED", fundingSource: "FUND" },
+          select: expenseListSelect,
+          orderBy: { date: "desc" },
+        })
+      : noRows,
+    isGroupFundTab
+      ? prisma.fundContribution.findMany({
+          where: { groupId: id },
+          include: { user: userBrief },
+          orderBy: { createdAt: "desc" },
+        })
+      : Promise.resolve([]),
   ]);
 
   if (!group) notFound();
@@ -224,7 +240,9 @@ export default async function GroupDetailPage({
   const totalPages = Math.max(1, Math.ceil(processedTotal / EXPENSES_PER_PAGE));
   const currentPage = Math.min(requestedPage, totalPages);
   const processedRows =
-    currentPage === requestedPage ? requestedProcessedPage : await getProcessedPage(currentPage);
+    !isExpensesTab || currentPage === requestedPage
+      ? requestedProcessedPage
+      : await getProcessedPage(currentPage);
 
   const usersById = new Map(group.members.map((m) => [m.userId, m.user]));
   const pendingInRange = withMemberNames(pendingRows, usersById);
@@ -256,7 +274,7 @@ export default async function GroupDetailPage({
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
-      <GroupRealtimeListener groupId={id} />
+      <GroupRealtimeListener groupId={id} memberCount={activeMembersCount} />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -367,7 +385,7 @@ export default async function GroupDetailPage({
               accountNumber: group.owner.accountNumber,
               accountName: group.owner.accountName,
             }}
-            fundContributions={group.fundContributions as any}
+            fundContributions={fundContributions as any}
             expenses={fundExpenses as any}
             members={group.members.filter((m) => !m.isLeft) as any}
           />
